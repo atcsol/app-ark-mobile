@@ -132,6 +132,7 @@ export default function SellersScreen() {
   const listHeader = (
     <View style={styles.header}>
       <Text style={styles.title}>Vendedores</Text>
+      <Text style={styles.subtitle}>Gerencie os vendedores cadastrados</Text>
       <SearchBar
         value={search}
         onChangeText={handleSearch}
@@ -177,12 +178,17 @@ const createStyles = (colors: Colors) => ({
   },
   header: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.xl,
     gap: spacing.md,
   },
   title: {
     ...heading.h2,
     color: colors.textPrimary,
+  },
+  subtitle: {
+    ...body.md,
+    color: colors.textSecondary,
+    marginTop: 4,
   },
   listContent: {
     paddingHorizontal: spacing.lg,

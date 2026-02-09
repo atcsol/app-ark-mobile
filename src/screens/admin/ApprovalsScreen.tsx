@@ -369,7 +369,7 @@ const createStyles = (colors: Colors) => ({
     paddingBottom: spacing.lg,
   },
   listHeader: {
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.xl,
   },
   screenTitle: {
     ...heading.h2,

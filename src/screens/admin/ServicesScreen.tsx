@@ -174,7 +174,8 @@ export default function ServicesScreen() {
   const listHeader = (
     <View style={styles.listHeader}>
       <Text style={styles.screenTitle}>Catalogo de Servicos</Text>
-      <WhiteSpace size="md" />
+      <Text style={styles.screenSubtitle}>Gerencie os servicos oferecidos</Text>
+      <WhiteSpace size="lg" />
       <SearchBar
         value={search}
         onChangeText={setSearch}
@@ -235,11 +236,16 @@ const createStyles = (colors: Colors) => ({
     paddingBottom: spacing.lg,
   },
   listHeader: {
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.xl,
   },
   screenTitle: {
     ...heading.h2,
     color: colors.textPrimary,
+  },
+  screenSubtitle: {
+    ...body.md,
+    color: colors.textSecondary,
+    marginTop: 4,
   },
   card: {
     backgroundColor: colors.white,

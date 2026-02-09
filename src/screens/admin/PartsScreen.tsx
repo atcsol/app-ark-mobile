@@ -182,7 +182,8 @@ export default function PartsScreen() {
   const listHeader = (
     <View style={styles.listHeader}>
       <Text style={styles.screenTitle}>Pecas</Text>
-      <WhiteSpace size="md" />
+      <Text style={styles.screenSubtitle}>Gerencie as pecas em estoque</Text>
+      <WhiteSpace size="lg" />
       <SearchBar
         value={search}
         onChangeText={setSearch}
@@ -239,11 +240,16 @@ const createStyles = (colors: Colors) => ({
     paddingBottom: spacing.lg,
   },
   listHeader: {
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.xl,
   },
   screenTitle: {
     ...heading.h2,
     color: colors.textPrimary,
+  },
+  screenSubtitle: {
+    ...body.md,
+    color: colors.textSecondary,
+    marginTop: 4,
   },
   card: {
     backgroundColor: colors.white,

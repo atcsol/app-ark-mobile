@@ -255,7 +255,7 @@ const createStyles = (colors: Colors) => ({
   },
   headerContainer: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.xl,
   },
   screenTitle: {
     ...heading.h2,
