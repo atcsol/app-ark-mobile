@@ -3,12 +3,13 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { adminApi } from '@/services/adminApi';
 import { SearchBar, RefreshableList, EmptyState, LoadingScreen, Avatar } from '@/components/ui';
+import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { heading, body, caption, spacing, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
 import { formatCurrency, formatNumber, formatPercentage } from '@/utils/formatters';
-import { useRefreshOnFocus, usePermissions } from '@/hooks';
+import { useRefreshOnFocus, usePermissions, useAdaptiveLayout } from '@/hooks';
 import type { Seller, PaginatedResponse } from '@/types';
 
 const PER_PAGE = 20;
@@ -18,6 +19,7 @@ export default function SellersScreen() {
   const { can } = usePermissions();
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
+  const { listContentStyle } = useAdaptiveLayout();
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -130,8 +132,7 @@ export default function SellersScreen() {
 
   const listHeader = (
     <View style={styles.header}>
-      <Text style={styles.title}>Vendedores</Text>
-      <Text style={styles.subtitle}>Gerencie os vendedores cadastrados</Text>
+      <ScreenHeader title="Vendedores" subtitle="Gerencie os vendedores cadastrados" />
       <SearchBar
         value={search}
         onChangeText={handleSearch}
@@ -141,7 +142,7 @@ export default function SellersScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable={false} padded={false}>
       <RefreshableList
         data={sellers}
         renderItem={renderItem}
@@ -154,7 +155,7 @@ export default function SellersScreen() {
         ListHeaderComponent={listHeader}
         emptyTitle="Nenhum vendedor encontrado"
         emptyDescription="Nao ha vendedores cadastrados."
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={listContentStyle}
       />
       {can('sellers.create') && (
         <TouchableOpacity
@@ -165,31 +166,14 @@ export default function SellersScreen() {
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       )}
-    </View>
+    </ScreenContainer>
   );
 }
 
 const createStyles = (colors: Colors) => ({
-  container: {
-    flex: 1,
-  },
   header: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
     gap: spacing.md,
-  },
-  title: {
-    ...heading.h2,
-    color: colors.textPrimary,
-  },
-  subtitle: {
-    ...body.md,
-    color: colors.textSecondary,
-    marginTop: 4,
-  },
-  listContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
   },
   fab: {
     position: 'absolute' as const,

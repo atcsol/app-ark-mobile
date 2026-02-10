@@ -27,11 +27,13 @@ interface Part {
   name: string;
   description?: string;
   part_number?: string;
-  brand?: string;
+  brand_id?: string;
+  brand?: { id: string; name: string };
   unit_price: number;
   stock_quantity: number;
   min_stock: number;
-  category?: string;
+  category_id?: string;
+  category?: { id: string; name: string; color?: string };
   stock_movements?: StockMovement[];
 }
 
@@ -136,11 +138,11 @@ export default function PartDetailScreen() {
           {part.part_number ? (
             <InfoRow label="Numero da Peca" value={part.part_number} styles={infoRowStylesThemed} />
           ) : null}
-          {part.brand ? (
-            <InfoRow label="Marca" value={part.brand} styles={infoRowStylesThemed} />
+          {part.brand?.name ? (
+            <InfoRow label="Marca" value={part.brand.name} styles={infoRowStylesThemed} />
           ) : null}
-          {part.category ? (
-            <InfoRow label="Categoria" value={part.category} styles={infoRowStylesThemed} />
+          {part.category?.name ? (
+            <InfoRow label="Categoria" value={part.category.name} styles={infoRowStylesThemed} />
           ) : null}
           <InfoRow label="Preco Unitario" value={formatCurrency(part.unit_price)} highlight styles={infoRowStylesThemed} />
         </View>

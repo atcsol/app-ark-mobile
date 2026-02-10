@@ -1,43 +1,55 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, Alert, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@ant-design/react-native';
 import { adminApi } from '@/services/adminApi';
 import { ScreenContainer } from '@/components/layout';
 import { FormInput } from '@/components/forms/FormInput';
 import { FormCurrency } from '@/components/forms/FormCurrency';
+import { FormSelect } from '@/components/forms/FormSelect';
 import { spacing, heading, body, borderRadius } from '@/theme';
-import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
+import type { SelectOption } from '@/types';
 
 interface ServiceForm {
   name: string;
   description: string;
-  category: string;
+  category_id: string;
   base_price: number;
 }
 
 interface FormErrors {
   name?: string;
+  category_id?: string;
   base_price?: string;
 }
 
 const EMPTY_FORM: ServiceForm = {
   name: '',
   description: '',
-  category: '',
+  category_id: '',
   base_price: 0,
 };
 
 export default function ServiceCreateScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
 
+  const [categoryOptions, setCategoryOptions] = useState<SelectOption[]>([]);
   const [form, setForm] = useState<ServiceForm>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await adminApi.getCategories({ active: true, per_page: 100 });
+        const cats = res.data || res;
+        setCategoryOptions(cats.map((c: any) => ({ label: c.name, value: c.id })));
+      } catch {}
+    })();
+  }, []);
 
   const updateField = useCallback(
     <K extends keyof ServiceForm>(key: K, value: ServiceForm[K]) => {
@@ -67,7 +79,7 @@ export default function ServiceCreateScreen() {
         base_price: form.base_price,
       };
       if (form.description.trim()) data.description = form.description.trim();
-      if (form.category.trim()) data.category = form.category.trim();
+      if (form.category_id) data.category_id = form.category_id;
 
       await adminApi.createService(data);
       Alert.alert('Sucesso', 'Servico cadastrado com sucesso.', [
@@ -106,11 +118,13 @@ export default function ServiceCreateScreen() {
           style={styles.textArea}
         />
 
-        <FormInput
+        <FormSelect
           label="Categoria"
-          value={form.category}
-          onChangeText={(text) => updateField('category', text)}
-          placeholder="Ex: Mecanica, Eletrica..."
+          value={form.category_id}
+          options={categoryOptions}
+          onValueChange={(value) => updateField('category_id', value)}
+          error={errors.category_id}
+          placeholder="Selecione a categoria..."
         />
 
         <FormCurrency

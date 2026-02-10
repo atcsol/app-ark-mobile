@@ -2,9 +2,10 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { sellerApi } from '@/services/sellerApi';
+import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { SearchBar, RefreshableList, LoadingScreen, EmptyState, StatusTag } from '@/components/ui';
-import { useRefreshOnFocus } from '@/hooks';
-import { spacing, heading, body, caption, borderRadius } from '@/theme';
+import { useRefreshOnFocus, useAdaptiveLayout } from '@/hooks';
+import { spacing, body, caption, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
@@ -22,6 +23,7 @@ export default function SalesScreen() {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const router = useRouter();
+  const { listContentStyle } = useAdaptiveLayout();
 
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,8 +150,7 @@ export default function SalesScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      <Text style={styles.screenTitle}>Vendas</Text>
-      <Text style={styles.screenSubtitle}>Historico de vendas realizadas</Text>
+      <ScreenHeader title="Vendas" subtitle="Historico de vendas realizadas" />
 
       <View style={styles.searchContainer}>
         <SearchBar
@@ -190,14 +191,14 @@ export default function SalesScreen() {
 
   if (error && sales.length === 0) {
     return (
-      <View style={styles.container}>
+      <ScreenContainer>
         <EmptyState title="Erro ao carregar" description={error} />
-      </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable={false} padded={false}>
       <RefreshableList
         data={sales}
         renderItem={renderSaleCard}
@@ -210,32 +211,15 @@ export default function SalesScreen() {
         ListHeaderComponent={renderHeader()}
         emptyTitle="Nenhuma venda encontrada"
         emptyDescription="Nao ha vendas que correspondam aos filtros selecionados."
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={listContentStyle}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 
 const createStyles = (colors: Colors) => ({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    paddingBottom: spacing.xxxl + spacing.xxl,
-  },
   headerContainer: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
-  },
-  screenTitle: {
-    ...heading.h2,
-    color: colors.textPrimary,
-  },
-  screenSubtitle: {
-    ...body.md,
-    color: colors.textSecondary,
-    marginTop: 4,
   },
   searchContainer: {
     marginTop: spacing.lg,
@@ -270,7 +254,6 @@ const createStyles = (colors: Colors) => ({
     backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },

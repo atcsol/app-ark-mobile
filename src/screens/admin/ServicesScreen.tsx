@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { WhiteSpace } from '@ant-design/react-native';
 import { adminApi } from '@/services/adminApi';
-import { ScreenContainer } from '@/components/layout';
+import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { SearchBar, LoadingScreen, EmptyState, RefreshableList, ConfirmModal, FilterChips } from '@/components/ui';
 import type { FilterOption } from '@/components/ui';
 import { heading, body, caption, spacing, borderRadius } from '@/theme';
@@ -11,7 +11,13 @@ import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
 import { formatCurrency } from '@/utils/formatters';
-import { usePermissions } from '@/hooks';
+import { usePermissions, useAdaptiveLayout } from '@/hooks';
+
+interface ServiceCategory {
+  id: string;
+  name: string;
+  color?: string;
+}
 
 interface ServiceCatalog {
   id: number;
@@ -19,37 +25,39 @@ interface ServiceCatalog {
   name: string;
   description?: string;
   base_price: number;
-  category?: string;
+  category_id?: string;
+  category?: ServiceCategory;
 }
 
-const CATEGORY_FILTERS: FilterOption[] = [
-  { label: 'Todas', value: 'all' },
-  { label: 'Mecanica', value: 'mecanica' },
-  { label: 'Eletrica', value: 'eletrica' },
-  { label: 'Funilaria', value: 'funilaria' },
-  { label: 'Pintura', value: 'pintura' },
-  { label: 'Detalhamento', value: 'detalhamento' },
-  { label: 'Diagnostico', value: 'diagnostico' },
-  { label: 'Outros', value: 'outros' },
-];
+const DEFAULT_CATEGORY_COLOR = { bg: '#f0f0f0', text: '#666666' };
 
-const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
-  mecanica: { bg: '#e6f7ff', text: '#1890ff' },
-  eletrica: { bg: '#fff7e6', text: '#fa8c16' },
-  funilaria: { bg: '#f9f0ff', text: '#722ed1' },
-  pintura: { bg: '#f6ffed', text: '#52c41a' },
-  default: { bg: '#f0f0f0', text: '#666666' },
+const COLOR_MAP: Record<string, { bg: string; text: string }> = {
+  blue: { bg: '#e6f7ff', text: '#1890ff' },
+  purple: { bg: '#f9f0ff', text: '#722ed1' },
+  cyan: { bg: '#e6fffb', text: '#13c2c2' },
+  red: { bg: '#fff1f0', text: '#f5222d' },
+  gold: { bg: '#fff7e6', text: '#fa8c16' },
+  green: { bg: '#f6ffed', text: '#52c41a' },
+  orange: { bg: '#fff7e6', text: '#fa8c16' },
+  magenta: { bg: '#fff0f6', text: '#eb2f96' },
+  teal: { bg: '#e6fffb', text: '#13c2c2' },
+  lime: { bg: '#fcffe6', text: '#a0d911' },
+  indigo: { bg: '#f0f5ff', text: '#2f54eb' },
+  brown: { bg: '#fff1e6', text: '#ad6800' },
+  pink: { bg: '#fff0f6', text: '#eb2f96' },
+  gray: { bg: '#f0f0f0', text: '#666666' },
 };
 
-function getCategoryColor(category?: string) {
-  if (!category) return CATEGORY_COLORS.default;
-  return CATEGORY_COLORS[category.toLowerCase()] || CATEGORY_COLORS.default;
+function getCategoryColor(category?: ServiceCategory) {
+  if (!category?.color) return DEFAULT_CATEGORY_COLOR;
+  return COLOR_MAP[category.color] || DEFAULT_CATEGORY_COLOR;
 }
 
 export default function ServicesScreen() {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const { can } = usePermissions();
+  const { listContentStyle } = useAdaptiveLayout();
   const router = useRouter();
 
   const [services, setServices] = useState<ServiceCatalog[]>([]);
@@ -57,18 +65,33 @@ export default function ServicesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [categoryOptions, setCategoryOptions] = useState<FilterOption[]>([{ label: 'Todas', value: 'all' }]);
   const [error, setError] = useState<string | null>(null);
 
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState<ServiceCatalog | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await adminApi.getCategories({ active: true });
+        const cats = data.data || data;
+        const options: FilterOption[] = [
+          { label: 'Todas', value: 'all' },
+          ...cats.map((c: any) => ({ label: c.name, value: String(c.id) })),
+        ];
+        setCategoryOptions(options);
+      } catch {}
+    })();
+  }, []);
+
   const fetchServices = useCallback(async () => {
     try {
       setError(null);
       const params: Record<string, any> = {};
       if (search.trim()) params.search = search.trim();
-      if (categoryFilter !== 'all') params.category = categoryFilter;
+      if (categoryFilter !== 'all') params.category_id = categoryFilter;
       const data = await adminApi.getServices(params);
       setServices(data.data || data);
     } catch (err: any) {
@@ -148,10 +171,10 @@ export default function ServicesScreen() {
           <Text style={styles.cardName} numberOfLines={1}>
             {item.name}
           </Text>
-          {item.category ? (
+          {item.category?.name ? (
             <View style={[styles.categoryTag, { backgroundColor: catColor.bg }]}>
               <Text style={[styles.categoryText, { color: catColor.text }]}>
-                {item.category}
+                {item.category.name}
               </Text>
             </View>
           ) : null}
@@ -173,9 +196,7 @@ export default function ServicesScreen() {
 
   const listHeader = (
     <View style={styles.listHeader}>
-      <Text style={styles.screenTitle}>Catalogo de Servicos</Text>
-      <Text style={styles.screenSubtitle}>Gerencie os servicos oferecidos</Text>
-      <WhiteSpace size="lg" />
+      <ScreenHeader title="Catalogo de Servicos" subtitle="Gerencie os servicos oferecidos" />
       <SearchBar
         value={search}
         onChangeText={setSearch}
@@ -183,7 +204,7 @@ export default function ServicesScreen() {
       />
       <WhiteSpace size="md" />
       <FilterChips
-        options={CATEGORY_FILTERS}
+        options={categoryOptions}
         value={categoryFilter}
         onChange={setCategoryFilter}
       />
@@ -192,7 +213,7 @@ export default function ServicesScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable={false} padded={false}>
       <RefreshableList
         data={services}
         renderItem={renderServiceCard}
@@ -202,7 +223,7 @@ export default function ServicesScreen() {
         ListHeaderComponent={listHeader}
         emptyTitle="Nenhum servico encontrado"
         emptyDescription="Nao ha servicos cadastrados."
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={listContentStyle}
       />
 
       {can('services.create') && (
@@ -222,30 +243,13 @@ export default function ServicesScreen() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 
 const createStyles = (colors: Colors) => ({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-  },
   listHeader: {
     paddingBottom: spacing.xl,
-  },
-  screenTitle: {
-    ...heading.h2,
-    color: colors.textPrimary,
-  },
-  screenSubtitle: {
-    ...body.md,
-    color: colors.textSecondary,
-    marginTop: 4,
   },
   card: {
     backgroundColor: colors.white,

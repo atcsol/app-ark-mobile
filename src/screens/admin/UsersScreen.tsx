@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { adminApi } from '@/services/adminApi';
 import { SearchBar, RefreshableList, EmptyState, LoadingScreen, Avatar, FilterChips } from '@/components/ui';
-import { ScreenContainer } from '@/components/layout';
-import { usePermissions, useRefreshOnFocus } from '@/hooks';
+import { ScreenContainer, ScreenHeader } from '@/components/layout';
+import { usePermissions, useRefreshOnFocus, useAdaptiveLayout } from '@/hooks';
 import { heading, body, caption, spacing, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
@@ -36,6 +36,7 @@ export default function UsersScreen() {
   const { can } = usePermissions();
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
+  const { listContentStyle } = useAdaptiveLayout();
 
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -186,16 +187,15 @@ export default function UsersScreen() {
 
   if (error && users.length === 0) {
     return (
-      <View style={styles.container}>
+      <ScreenContainer>
         <EmptyState title="Erro ao carregar" description={error} />
-      </View>
+      </ScreenContainer>
     );
   }
 
   const listHeader = (
     <View style={styles.headerContainer}>
-      <Text style={styles.screenTitle}>Usuarios</Text>
-      <Text style={styles.screenSubtitle}>Gerencie os usuarios do sistema</Text>
+      <ScreenHeader title="Usuarios" subtitle="Gerencie os usuarios do sistema" />
 
       <View style={styles.searchContainer}>
         <SearchBar
@@ -216,7 +216,7 @@ export default function UsersScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable={false} padded={false}>
       <RefreshableList
         data={users}
         renderItem={renderItem}
@@ -229,7 +229,7 @@ export default function UsersScreen() {
         ListHeaderComponent={listHeader}
         emptyTitle="Nenhum usuario encontrado"
         emptyDescription="Nao ha usuarios que correspondam aos filtros selecionados."
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={listContentStyle}
       />
 
       {can('users.create') && (
@@ -241,30 +241,13 @@ export default function UsersScreen() {
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       )}
-    </View>
+    </ScreenContainer>
   );
 }
 
 const createStyles = (colors: Colors) => ({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    paddingBottom: spacing.xxl + spacing.xl,
-  },
   headerContainer: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
-  },
-  screenTitle: {
-    ...heading.h2,
-    color: colors.textPrimary,
-  },
-  screenSubtitle: {
-    ...body.md,
-    color: colors.textSecondary,
-    marginTop: 4,
   },
   searchContainer: {
     marginTop: spacing.lg,
@@ -285,7 +268,6 @@ const createStyles = (colors: Colors) => ({
     shadowRadius: 4,
     elevation: 2,
     marginBottom: spacing.md,
-    marginHorizontal: spacing.lg,
   },
   cardRow: {
     flexDirection: 'row' as const,

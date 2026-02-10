@@ -3,12 +3,13 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { adminApi } from '@/services/adminApi';
 import { SearchBar, RefreshableList, EmptyState, LoadingScreen, Avatar } from '@/components/ui';
+import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { heading, body, caption, spacing, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
-import { useRefreshOnFocus, usePermissions } from '@/hooks';
+import { useRefreshOnFocus, usePermissions, useAdaptiveLayout } from '@/hooks';
 import type { Investor, PaginatedResponse } from '@/types';
 
 const PER_PAGE = 20;
@@ -18,6 +19,7 @@ export default function InvestorsScreen() {
   const styles = useThemeStyles(createStyles);
   const router = useRouter();
   const { can } = usePermissions();
+  const { listContentStyle } = useAdaptiveLayout();
   const [investors, setInvestors] = useState<Investor[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -130,8 +132,7 @@ export default function InvestorsScreen() {
 
   const listHeader = (
     <View style={styles.header}>
-      <Text style={styles.title}>Investidores</Text>
-      <Text style={styles.subtitle}>Gerencie os investidores cadastrados</Text>
+      <ScreenHeader title="Investidores" subtitle="Gerencie os investidores cadastrados" />
       <SearchBar
         value={search}
         onChangeText={handleSearch}
@@ -141,7 +142,7 @@ export default function InvestorsScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable={false} padded={false}>
       <RefreshableList
         data={investors}
         renderItem={renderItem}
@@ -154,7 +155,7 @@ export default function InvestorsScreen() {
         ListHeaderComponent={listHeader}
         emptyTitle="Nenhum investidor encontrado"
         emptyDescription="Nao ha investidores cadastrados."
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={listContentStyle}
       />
       {can('investors.create') && (
         <TouchableOpacity
@@ -165,31 +166,14 @@ export default function InvestorsScreen() {
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       )}
-    </View>
+    </ScreenContainer>
   );
 }
 
 const createStyles = (colors: Colors) => ({
-  container: {
-    flex: 1,
-  },
   header: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
     gap: spacing.md,
-  },
-  title: {
-    ...heading.h2,
-    color: colors.textPrimary,
-  },
-  subtitle: {
-    ...body.md,
-    color: colors.textSecondary,
-    marginTop: 4,
-  },
-  listContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
   },
   fab: {
     position: 'absolute' as const,

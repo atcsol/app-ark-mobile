@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { VehicleStatusBadge } from './VehicleStatusBadge';
+import { FallbackImage } from '@/components/ui';
 import { spacing, heading, body, caption, borderRadius } from '@/theme';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
@@ -23,8 +24,9 @@ export function VehicleCard({ vehicle, onPress }: Props) {
       activeOpacity={0.7}
     >
       {primaryImage && (
-        <Image
-          source={{ uri: primaryImage.thumbnail || primaryImage.url }}
+        <FallbackImage
+          uri={primaryImage.thumbnail || primaryImage.url}
+          fallbackUri={primaryImage.url}
           style={styles.thumbnail}
           resizeMode="cover"
         />

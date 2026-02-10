@@ -4,7 +4,7 @@
  */
 
 import type { Mechanic } from './mechanic';
-import type { PartUsage } from './part';
+import type { PartUsage, Category } from './part';
 
 // ---------------------------------------------------------------------------
 // Service Status
@@ -31,7 +31,8 @@ export interface ServiceCatalog {
   name: string;
   description?: string;
   base_price: number;
-  category?: string;
+  category_id?: string;
+  category?: Category;
 }
 
 // ---------------------------------------------------------------------------

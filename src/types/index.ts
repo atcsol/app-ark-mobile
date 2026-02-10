@@ -89,10 +89,13 @@ export type {
   VehicleService,
 } from './service';
 
-// Parts
+// Parts, Categories, Brands
 export type {
   Part,
   PartUsage,
+  Category,
+  Brand,
+  PartCompatibility,
 } from './part';
 
 // Approvals

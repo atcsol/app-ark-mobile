@@ -1,7 +1,7 @@
 import React from 'react';
 import { Drawer } from 'expo-router/drawer';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
@@ -19,6 +19,8 @@ const MENU_SCREENS = [
   { name: 'services', title: 'Servicos', icon: '⚙️', isDir: true },
   { name: 'parts', title: 'Pecas', icon: '🔩', isDir: true },
   { name: 'approvals', title: 'Aprovacoes', icon: '✅', isDir: true },
+  { name: 'categories', title: 'Categorias', icon: '🏷️' },
+  { name: 'brands', title: 'Marcas', icon: '🏭' },
   { name: 'reports', title: 'Relatorios', icon: '📈', isDir: true },
   { name: 'users', title: 'Usuarios', icon: '👥', isDir: true },
   { name: 'roles', title: 'Roles', icon: '🛡️' },
@@ -98,6 +100,7 @@ function CustomDrawerContent(props: any) {
 
 export default function AdminLayout() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Drawer
@@ -105,9 +108,11 @@ export default function AdminLayout() {
       screenOptions={{
         headerShown: true,
         headerStyle: { backgroundColor: colors.background },
+        headerStatusBarHeight: insets.top,
         headerShadowVisible: false,
         headerTintColor: colors.accent,
         headerTitleStyle: { color: colors.textPrimary, fontWeight: '600' },
+        headerLeftContainerStyle: { paddingLeft: 0 },
         drawerActiveTintColor: colors.accent,
         drawerInactiveTintColor: colors.textSecondary,
         drawerActiveBackgroundColor: colors.accent + '15',

@@ -14,7 +14,7 @@ import {
   VehicleAddServiceSection,
   VehiclePartsUsedSection,
 } from '@/components/vehicles';
-import { usePermissions } from '@/hooks';
+import { usePermissions, useAdaptiveLayout } from '@/hooks';
 import { spacing, heading, body, caption, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
@@ -36,6 +36,7 @@ export default function VehicleDetailScreen() {
   const { uuid } = useLocalSearchParams<{ uuid: string }>();
   const router = useRouter();
   const { can } = usePermissions();
+  const { listContentStyle } = useAdaptiveLayout();
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);
@@ -133,7 +134,8 @@ export default function VehicleDetailScreen() {
   }
 
   return (
-    <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh}>
+    <ScreenContainer refreshing={refreshing} onRefresh={handleRefresh} padded={false}>
+      <View style={{ paddingHorizontal: listContentStyle.paddingHorizontal }}>
       <Text style={styles.vehicleTitle}>{vehicle.full_name}</Text>
       <View style={styles.statusRow}>
         <VehicleStatusBadge status={vehicle.status} />
@@ -274,6 +276,8 @@ export default function VehicleDetailScreen() {
             </TouchableOpacity>
           )}
         </View>
+      </View>
+
       </View>
 
       {/* Delete Confirmation Modal */}

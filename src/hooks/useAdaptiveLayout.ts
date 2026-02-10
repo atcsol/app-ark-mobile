@@ -24,10 +24,17 @@ export function useAdaptiveLayout() {
       : (contentMaxWidth - padding * 3) / 2
     : screenWidth - padding * 2;
 
+  /** Style object ready to spread on FlatList contentContainerStyle */
+  const listContentStyle = {
+    paddingHorizontal,
+    paddingBottom: padding,
+  };
+
   return {
     contentMaxWidth,
     padding,
     paddingHorizontal,
+    listContentStyle,
     fontSize,
     cardWidth,
     isIPad,

@@ -3,12 +3,13 @@ import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { WhiteSpace } from '@ant-design/react-native';
 import { adminApi } from '@/services/adminApi';
 import { RefreshableList, LoadingScreen, EmptyState, StatusTag, ConfirmModal, FilterChips } from '@/components/ui';
+import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { heading, body, caption, spacing, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
 import { formatDate } from '@/utils/formatters';
-import { usePermissions } from '@/hooks';
+import { usePermissions, useAdaptiveLayout } from '@/hooks';
 
 type ApprovalType = 'services' | 'parts' | 'sales';
 type ApprovalItemStatus = 'pending' | 'approved' | 'rejected';
@@ -72,6 +73,7 @@ export default function ApprovalsScreen() {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const { can } = usePermissions();
+  const { listContentStyle } = useAdaptiveLayout();
 
   const TYPE_ICON_COLORS: Record<ApprovalType, string> = {
     services: colors.info,
@@ -297,12 +299,10 @@ export default function ApprovalsScreen() {
 
   const listHeader = (
     <View style={styles.listHeader}>
-      <Text style={styles.screenTitle}>Aprovacoes</Text>
-      {stats && (
-        <Text style={styles.screenSubtitle}>
-          {stats.total_pending} pendente{stats.total_pending !== 1 ? 's' : ''}
-        </Text>
-      )}
+      <ScreenHeader
+        title="Aprovacoes"
+        subtitle={stats ? `${stats.total_pending} pendente${stats.total_pending !== 1 ? 's' : ''}` : undefined}
+      />
       <WhiteSpace size="md" />
       {renderTabBar()}
       <WhiteSpace size="md" />
@@ -316,7 +316,7 @@ export default function ApprovalsScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable={false} padded={false}>
       {loading && approvals.length === 0 ? (
         <LoadingScreen message="Carregando aprovacoes..." />
       ) : error && approvals.length === 0 ? (
@@ -334,7 +334,7 @@ export default function ApprovalsScreen() {
           ListHeaderComponent={listHeader}
           emptyTitle="Nenhuma aprovacao encontrada"
           emptyDescription="Nao ha aprovacoes para esta categoria."
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={listContentStyle}
         />
       )}
 
@@ -351,34 +351,17 @@ export default function ApprovalsScreen() {
         onConfirm={handleReject}
         onCancel={() => setRejectTarget(null)}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 
 const createStyles = (colors: Colors) => ({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   errorContainer: {
     flex: 1,
     padding: spacing.lg,
   },
-  listContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-  },
   listHeader: {
     paddingBottom: spacing.xl,
-  },
-  screenTitle: {
-    ...heading.h2,
-    color: colors.textPrimary,
-  },
-  screenSubtitle: {
-    ...body.md,
-    color: colors.textSecondary,
-    marginTop: 4,
   },
   tabBar: {
     flexDirection: 'row' as const,

@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { InputItem, Button, Toast } from '@ant-design/react-native';
 import { router } from 'expo-router';
 import apiClient from '@/services/api';
+import { useAdaptiveLayout } from '@/hooks';
 import { spacing, heading, body, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
@@ -24,6 +25,7 @@ export default function ForgotPasswordScreen() {
   const [submittedEmail, setSubmittedEmail] = useState('');
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
+  const { paddingHorizontal } = useAdaptiveLayout();
 
   const handleSubmit = async () => {
     if (!email.trim()) {
@@ -161,7 +163,7 @@ export default function ForgotPasswordScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <ScrollView
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingHorizontal }]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
@@ -187,7 +189,6 @@ const createStyles = (colors: Colors) => ({
     flexGrow: 1,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
-    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.xxl,
   },
   card: {

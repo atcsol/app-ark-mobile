@@ -162,6 +162,27 @@ export const adminApi = {
   uploadAvatar: (formData: FormData) => apiClient.upload('/auth/avatar', formData),
   deleteAvatar: () => apiClient.delete('/auth/avatar'),
 
+  // Categories
+  getCategories: (params?: Record<string, any>) => apiClient.get('/categories', params),
+  getCategory: (id: string) => apiClient.get(`/categories/${id}`),
+  createCategory: (data: any) => apiClient.post('/categories', data),
+  updateCategory: (id: string, data: any) => apiClient.put(`/categories/${id}`, data),
+  deleteCategory: (id: string) => apiClient.delete(`/categories/${id}`),
+
+  // Brands
+  getBrands: (params?: Record<string, any>) => apiClient.get('/brands', params),
+  getBrand: (id: string) => apiClient.get(`/brands/${id}`),
+  createBrand: (data: any) => apiClient.post('/brands', data),
+  updateBrand: (id: string, data: any) => apiClient.put(`/brands/${id}`, data),
+  deleteBrand: (id: string) => apiClient.delete(`/brands/${id}`),
+
+  // Part Compatibilities
+  getPartCompatibilities: (partId: string) => apiClient.get(`/parts/${partId}/compatibilities`),
+  addPartCompatibility: (partId: string, data: any) =>
+    apiClient.post(`/parts/${partId}/compatibilities`, data),
+  removePartCompatibility: (partId: string, compId: number) =>
+    apiClient.delete(`/parts/${partId}/compatibilities/${compId}`),
+
   // Roles
   getRoles: () => apiClient.get('/roles'),
   getRole: (name: string) => apiClient.get(`/roles/${name}`),

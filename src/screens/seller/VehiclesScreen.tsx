@@ -2,10 +2,11 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { sellerApi } from '@/services/sellerApi';
+import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { SearchBar, RefreshableList, LoadingScreen, EmptyState } from '@/components/ui';
 import { VehicleCard } from '@/components/vehicles';
-import { useRefreshOnFocus } from '@/hooks';
-import { spacing, heading, body, caption, borderRadius } from '@/theme';
+import { useRefreshOnFocus, useAdaptiveLayout } from '@/hooks';
+import { spacing, body, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
@@ -17,6 +18,7 @@ export default function VehiclesScreen() {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const router = useRouter();
+  const { listContentStyle } = useAdaptiveLayout();
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,8 +110,7 @@ export default function VehiclesScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      <Text style={styles.screenTitle}>Veiculos</Text>
-      <Text style={styles.screenSubtitle}>Veiculos disponiveis e vendidos</Text>
+      <ScreenHeader title="Veiculos" subtitle="Veiculos disponiveis e vendidos" />
 
       <View style={styles.tabsContainer}>
         <TouchableOpacity
@@ -150,14 +151,14 @@ export default function VehiclesScreen() {
 
   if (error && vehicles.length === 0) {
     return (
-      <View style={styles.container}>
+      <ScreenContainer>
         <EmptyState title="Erro ao carregar" description={error} />
-      </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable={false} padded={false}>
       <RefreshableList
         data={vehicles}
         renderItem={({ item }) => (
@@ -182,7 +183,7 @@ export default function VehiclesScreen() {
             ? 'Nao ha veiculos disponiveis para venda no momento.'
             : 'Nenhum veiculo vendido foi encontrado.'
         }
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={listContentStyle}
       />
 
       <TouchableOpacity
@@ -192,30 +193,13 @@ export default function VehiclesScreen() {
       >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
-    </View>
+    </ScreenContainer>
   );
 }
 
 const createStyles = (colors: Colors) => ({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    paddingBottom: spacing.xxxl + spacing.xxl,
-  },
   headerContainer: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
-  },
-  screenTitle: {
-    ...heading.h2,
-    color: colors.textPrimary,
-  },
-  screenSubtitle: {
-    ...body.md,
-    color: colors.textSecondary,
-    marginTop: 4,
   },
   tabsContainer: {
     flexDirection: 'row' as const,
@@ -248,7 +232,6 @@ const createStyles = (colors: Colors) => ({
     marginTop: spacing.md,
   },
   cardWrapper: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
   },
   fab: {

@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
+import { useHeaderOptions } from '@/hooks';
 
 const TAB_ITEMS = [
   { name: 'dashboard', title: 'Dashboard', icon: '📊' },
@@ -11,13 +12,13 @@ const TAB_ITEMS = [
 
 export default function MechanicLayout() {
   const { colors } = useTheme();
+  const headerOptions = useHeaderOptions();
 
   return (
     <Tabs
       screenOptions={{
+        ...headerOptions,
         headerShown: true,
-        headerStyle: { backgroundColor: colors.background },
-        headerShadowVisible: false,
         headerTitleStyle: { color: colors.textPrimary, fontWeight: '600' },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textTertiary,

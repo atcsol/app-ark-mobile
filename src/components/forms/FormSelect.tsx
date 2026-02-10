@@ -1,10 +1,22 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Modal } from '@ant-design/react-native';
+import React, { useState, useMemo } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  StyleSheet,
+  FlatList,
+  Modal,
+  TextInput,
+  Dimensions,
+  Platform,
+} from 'react-native';
 import { spacing, body, caption, borderRadius } from '@/theme';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
 import type { SelectOption } from '@/types';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 interface Props {
   label: string;
@@ -12,6 +24,7 @@ interface Props {
   error?: string;
   disabled?: boolean;
   placeholder?: string;
+  searchable?: boolean;
   value: string | number | undefined;
   options: SelectOption[];
   onValueChange: (value: string) => void;
@@ -23,17 +36,49 @@ export function FormSelect({
   error,
   disabled = false,
   placeholder = 'Selecione...',
+  searchable,
   value,
   options,
   onValueChange,
 }: Props) {
   const styles = useThemeStyles(createStyles);
   const [visible, setVisible] = useState(false);
+  const [search, setSearch] = useState('');
   const selectedOption = options.find((o) => String(o.value) === String(value));
+
+  const showSearch = searchable ?? options.length > 8;
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return options;
+    const term = search.trim().toLowerCase();
+    return options.filter((o) => o.label.toLowerCase().includes(term));
+  }, [options, search]);
 
   const handleSelect = (optionValue: string) => {
     onValueChange(optionValue);
     setVisible(false);
+    setSearch('');
+  };
+
+  const handleClose = () => {
+    setVisible(false);
+    setSearch('');
+  };
+
+  const renderOption = ({ item }: { item: SelectOption }) => {
+    const isSelected = String(item.value) === String(value);
+    return (
+      <TouchableOpacity
+        style={[styles.option, isSelected && styles.optionSelected]}
+        onPress={() => handleSelect(String(item.value))}
+        activeOpacity={0.6}
+      >
+        <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
+          {item.label}
+        </Text>
+        {isSelected && <Text style={styles.checkmark}>✓</Text>}
+      </TouchableOpacity>
+    );
   };
 
   return (
@@ -52,56 +97,74 @@ export function FormSelect({
         activeOpacity={0.7}
       >
         <Text
-          style={[
-            styles.triggerText,
-            !selectedOption && styles.placeholder,
-          ]}
+          style={[styles.triggerText, !selectedOption && styles.placeholder]}
           numberOfLines={1}
         >
           {selectedOption?.label || placeholder}
         </Text>
-        <Text style={styles.chevron}>{'>'}</Text>
+        <Text style={styles.chevron}>▼</Text>
       </TouchableOpacity>
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <Modal
-        visible={visible}
-        transparent
-        maskClosable
-        onClose={() => setVisible(false)}
-        animationType="slide-up"
-      >
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{label}</Text>
-            <TouchableOpacity onPress={() => setVisible(false)}>
-              <Text style={styles.modalClose}>Fechar</Text>
-            </TouchableOpacity>
+      <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={handleClose}>
+        <View style={styles.overlay}>
+          {/* Backdrop */}
+          <TouchableWithoutFeedback onPress={handleClose}>
+            <View style={styles.backdrop} />
+          </TouchableWithoutFeedback>
+
+          {/* Bottom sheet */}
+          <View style={styles.sheet}>
+            {/* Handle */}
+            <View style={styles.handleRow}>
+              <View style={styles.handle} />
+            </View>
+
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>{label}</Text>
+              <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <Text style={styles.headerClose}>Fechar</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Search */}
+            {showSearch && (
+              <View style={styles.searchWrap}>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder={`Buscar ${label.toLowerCase()}...`}
+                  placeholderTextColor="#999"
+                  value={search}
+                  onChangeText={setSearch}
+                  autoCorrect={false}
+                  clearButtonMode="while-editing"
+                />
+              </View>
+            )}
+
+            {/* List */}
+            <FlatList
+              data={filtered}
+              keyExtractor={(item) => String(item.value)}
+              renderItem={renderOption}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.listContent}
+              ListEmptyComponent={
+                <View style={styles.empty}>
+                  <Text style={styles.emptyText}>Nenhum resultado</Text>
+                </View>
+              }
+            />
           </View>
-          {options.map((option) => (
-            <TouchableOpacity
-              key={String(option.value)}
-              style={[
-                styles.option,
-                String(option.value) === String(value) && styles.optionSelected,
-              ]}
-              onPress={() => handleSelect(String(option.value))}
-            >
-              <Text
-                style={[
-                  styles.optionText,
-                  String(option.value) === String(value) && styles.optionTextSelected,
-                ]}
-              >
-                {option.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
         </View>
       </Modal>
     </View>
   );
 }
+
+const SHEET_MAX = SCREEN_HEIGHT * 0.6;
+const BOTTOM_SAFE = Platform.OS === 'ios' ? 34 : 16;
 
 const createStyles = (colors: Colors) => ({
   container: {
@@ -141,52 +204,108 @@ const createStyles = (colors: Colors) => ({
   },
   chevron: {
     color: colors.textTertiary,
-    fontSize: 14,
+    fontSize: 10,
   },
   error: {
     ...caption.sm,
     color: colors.error,
     marginTop: spacing.xs,
   },
-  modalContent: {
-    backgroundColor: colors.card,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    paddingBottom: spacing.xxxl,
-    maxHeight: 400,
+  // Modal
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end' as const,
   },
-  modalHeader: {
+  backdrop: {
+    flex: 1,
+  },
+  sheet: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    maxHeight: SHEET_MAX,
+    paddingBottom: BOTTOM_SAFE,
+    marginHorizontal: 8,
+    marginBottom: 8,
+  },
+  handleRow: {
+    alignItems: 'center' as const,
+    paddingTop: 10,
+    paddingBottom: 6,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.border,
+  },
+  header: {
     flexDirection: 'row' as const,
     justifyContent: 'space-between' as const,
     alignItems: 'center' as const,
-    padding: spacing.lg,
-    borderBottomWidth: 1,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.divider,
   },
-  modalTitle: {
-    ...body.lg,
+  headerTitle: {
+    ...body.md,
     fontWeight: '600' as const,
     color: colors.textPrimary,
   },
-  modalClose: {
+  headerClose: {
     ...body.md,
     color: colors.accent,
   },
+  searchWrap: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.divider,
+  },
+  searchInput: {
+    ...body.md,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    height: 38,
+    color: colors.textPrimary,
+  },
+  listContent: {
+    paddingBottom: spacing.md,
+  },
   option: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.divider,
   },
   optionSelected: {
-    backgroundColor: colors.accent + '15',
+    backgroundColor: colors.accent + '10',
   },
   optionText: {
     ...body.md,
     color: colors.textPrimary,
+    flex: 1,
   },
   optionTextSelected: {
     color: colors.accent,
     fontWeight: '600' as const,
+  },
+  checkmark: {
+    color: colors.accent,
+    fontSize: 16,
+    fontWeight: '600' as const,
+    marginLeft: spacing.sm,
+  },
+  empty: {
+    padding: spacing.xl,
+    alignItems: 'center' as const,
+  },
+  emptyText: {
+    ...body.sm,
+    color: colors.textTertiary,
   },
 });

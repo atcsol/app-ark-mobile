@@ -2,8 +2,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { mechanicApi } from '@/services/mechanicApi';
+import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { SearchBar, RefreshableList, LoadingScreen, EmptyState, StatusTag } from '@/components/ui';
-import { useRefreshOnFocus } from '@/hooks';
+import { useRefreshOnFocus, useAdaptiveLayout } from '@/hooks';
 import { spacing, heading, body, caption, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
@@ -22,6 +23,7 @@ export default function ServicesScreen() {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const router = useRouter();
+  const { listContentStyle } = useAdaptiveLayout();
 
   const [services, setServices] = useState<VehicleService[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,8 +132,7 @@ export default function ServicesScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      <Text style={styles.screenTitle}>Servicos</Text>
-      <Text style={styles.screenSubtitle}>Seus servicos e atividades</Text>
+      <ScreenHeader title="Servicos" subtitle="Seus servicos e atividades" />
 
       <View style={styles.searchContainer}>
         <SearchBar
@@ -172,17 +173,17 @@ export default function ServicesScreen() {
 
   if (error && services.length === 0) {
     return (
-      <View style={styles.container}>
+      <ScreenContainer>
         <EmptyState
           title="Erro ao carregar"
           description={error}
         />
-      </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable={false} padded={false}>
       <RefreshableList
         data={filteredServices}
         renderItem={renderServiceCard}
@@ -192,7 +193,7 @@ export default function ServicesScreen() {
         ListHeaderComponent={renderHeader()}
         emptyTitle="Nenhum servico encontrado"
         emptyDescription="Nao ha servicos que correspondam aos filtros selecionados."
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={listContentStyle}
       />
 
       <TouchableOpacity
@@ -202,30 +203,13 @@ export default function ServicesScreen() {
       >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
-    </View>
+    </ScreenContainer>
   );
 }
 
 const createStyles = (colors: Colors) => ({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    paddingBottom: spacing.xxxl + spacing.xxl,
-  },
   headerContainer: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
-  },
-  screenTitle: {
-    ...heading.h2,
-    color: colors.textPrimary,
-  },
-  screenSubtitle: {
-    ...body.md,
-    color: colors.textSecondary,
-    marginTop: 4,
   },
   searchContainer: {
     marginTop: spacing.lg,
@@ -259,7 +243,6 @@ const createStyles = (colors: Colors) => ({
     backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },

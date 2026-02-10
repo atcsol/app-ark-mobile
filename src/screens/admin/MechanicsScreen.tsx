@@ -3,12 +3,13 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { adminApi } from '@/services/adminApi';
 import { SearchBar, RefreshableList, EmptyState, LoadingScreen, Avatar, StatusTag } from '@/components/ui';
+import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { heading, body, caption, spacing, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
 import { formatCurrency } from '@/utils/formatters';
-import { useRefreshOnFocus, usePermissions } from '@/hooks';
+import { useRefreshOnFocus, usePermissions, useAdaptiveLayout } from '@/hooks';
 import type { Mechanic, PaginatedResponse } from '@/types';
 
 const PER_PAGE = 20;
@@ -18,6 +19,7 @@ export default function MechanicsScreen() {
   const { can } = usePermissions();
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
+  const { listContentStyle } = useAdaptiveLayout();
   const [mechanics, setMechanics] = useState<Mechanic[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -120,8 +122,7 @@ export default function MechanicsScreen() {
 
   const listHeader = (
     <View style={styles.header}>
-      <Text style={styles.title}>Mecanicos</Text>
-      <Text style={styles.subtitle}>Gerencie os mecanicos cadastrados</Text>
+      <ScreenHeader title="Mecanicos" subtitle="Gerencie os mecanicos cadastrados" />
       <SearchBar
         value={search}
         onChangeText={handleSearch}
@@ -131,7 +132,7 @@ export default function MechanicsScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable={false} padded={false}>
       <RefreshableList
         data={mechanics}
         renderItem={renderItem}
@@ -144,7 +145,7 @@ export default function MechanicsScreen() {
         ListHeaderComponent={listHeader}
         emptyTitle="Nenhum mecanico encontrado"
         emptyDescription="Nao ha mecanicos cadastrados."
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={listContentStyle}
       />
       {can('mechanics.create') && (
         <TouchableOpacity
@@ -155,31 +156,14 @@ export default function MechanicsScreen() {
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       )}
-    </View>
+    </ScreenContainer>
   );
 }
 
 const createStyles = (colors: Colors) => ({
-  container: {
-    flex: 1,
-  },
   header: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
     gap: spacing.md,
-  },
-  title: {
-    ...heading.h2,
-    color: colors.textPrimary,
-  },
-  subtitle: {
-    ...body.md,
-    color: colors.textSecondary,
-    marginTop: 4,
-  },
-  listContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
   },
   fab: {
     position: 'absolute' as const,

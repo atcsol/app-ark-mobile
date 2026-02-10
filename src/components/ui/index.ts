@@ -8,3 +8,4 @@ export { ConfirmModal } from './ConfirmModal';
 export { RefreshableList } from './RefreshableList';
 export { FilterChips, ToggleFilter } from './FilterChips';
 export type { FilterOption } from './FilterChips';
+export { FallbackImage } from './FallbackImage';

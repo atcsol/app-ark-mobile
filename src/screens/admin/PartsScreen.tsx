@@ -4,13 +4,25 @@ import { useRouter } from 'expo-router';
 import { WhiteSpace } from '@ant-design/react-native';
 import { adminApi } from '@/services/adminApi';
 import { SearchBar, RefreshableList, LoadingScreen, EmptyState, FilterChips, ToggleFilter } from '@/components/ui';
+import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import type { FilterOption } from '@/components/ui';
 import { heading, body, caption, spacing, borderRadius } from '@/theme';
 import { formatCurrency } from '@/utils/formatters';
-import { usePermissions } from '@/hooks';
+import { usePermissions, useAdaptiveLayout } from '@/hooks';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
+
+interface PartCategory {
+  id: string;
+  name: string;
+  color?: string;
+}
+
+interface PartBrand {
+  id: string;
+  name: string;
+}
 
 interface Part {
   id: number;
@@ -18,49 +30,54 @@ interface Part {
   name: string;
   description?: string;
   part_number?: string;
-  brand?: string;
+  brand_id?: string;
+  brand?: PartBrand;
   unit_price: number;
   stock_quantity: number;
   min_stock: number;
-  category?: string;
+  category_id?: string;
+  category?: PartCategory;
 }
-
-const CATEGORY_FILTERS: FilterOption[] = [
-  { label: 'Todas', value: 'all' },
-  { label: 'Motor', value: 'motor' },
-  { label: 'Transmissao', value: 'transmissao' },
-  { label: 'Suspensao', value: 'suspensao' },
-  { label: 'Freios', value: 'freios' },
-  { label: 'Eletrica', value: 'eletrica' },
-  { label: 'Carroceria', value: 'carroceria' },
-  { label: 'Fluidos', value: 'fluidos' },
-  { label: 'Filtros', value: 'filtros' },
-  { label: 'Outros', value: 'outros' },
-];
 
 export default function PartsScreen() {
   const router = useRouter();
   const { can } = usePermissions();
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
+  const { listContentStyle } = useAdaptiveLayout();
 
   const [parts, setParts] = useState<Part[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [categoryOptions, setCategoryOptions] = useState<FilterOption[]>([{ label: 'Todas', value: 'all' }]);
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await adminApi.getCategories({ active: true });
+        const cats = data.data || data;
+        const options: FilterOption[] = [
+          { label: 'Todas', value: 'all' },
+          ...cats.map((c: any) => ({ label: c.name, value: String(c.id) })),
+        ];
+        setCategoryOptions(options);
+      } catch {}
+    })();
+  }, []);
+
   const fetchParts = useCallback(async (pageNum = 1, append = false) => {
     try {
       setError(null);
       const params: Record<string, any> = { page: pageNum, per_page: 20 };
       if (search.trim()) params.search = search.trim();
-      if (categoryFilter !== 'all') params.category = categoryFilter;
+      if (categoryFilter !== 'all') params.category_id = categoryFilter;
       if (lowStockOnly) params.low_stock = true;
       const data = await adminApi.getParts(params);
 
@@ -125,9 +142,9 @@ export default function PartsScreen() {
 
   if (error && parts.length === 0) {
     return (
-      <View style={styles.container}>
+      <ScreenContainer>
         <EmptyState title="Erro ao carregar" description={error} />
-      </View>
+      </ScreenContainer>
     );
   }
 
@@ -159,14 +176,14 @@ export default function PartsScreen() {
         </View>
 
         <View style={styles.cardMeta}>
-          {item.brand ? (
+          {item.brand?.name ? (
             <Text style={styles.metaText}>
-              {item.brand}
+              {item.brand.name}
             </Text>
           ) : null}
-          {item.category ? (
+          {item.category?.name ? (
             <Text style={styles.metaText}>
-              {item.brand ? ' | ' : ''}{item.category}
+              {item.brand?.name ? ' | ' : ''}{item.category.name}
             </Text>
           ) : null}
         </View>
@@ -181,9 +198,7 @@ export default function PartsScreen() {
 
   const listHeader = (
     <View style={styles.listHeader}>
-      <Text style={styles.screenTitle}>Pecas</Text>
-      <Text style={styles.screenSubtitle}>Gerencie as pecas em estoque</Text>
-      <WhiteSpace size="lg" />
+      <ScreenHeader title="Pecas" subtitle="Gerencie as pecas em estoque" />
       <SearchBar
         value={search}
         onChangeText={setSearch}
@@ -191,7 +206,7 @@ export default function PartsScreen() {
       />
       <WhiteSpace size="md" />
       <FilterChips
-        options={CATEGORY_FILTERS}
+        options={categoryOptions}
         value={categoryFilter}
         onChange={setCategoryFilter}
       />
@@ -206,7 +221,7 @@ export default function PartsScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable={false} padded={false}>
       <RefreshableList
         data={parts}
         renderItem={renderPartCard}
@@ -218,7 +233,7 @@ export default function PartsScreen() {
         ListHeaderComponent={listHeader}
         emptyTitle="Nenhuma peca encontrada"
         emptyDescription="Nao ha pecas cadastradas."
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={listContentStyle}
       />
 
       {can('parts.create') && (
@@ -226,30 +241,13 @@ export default function PartsScreen() {
           <Text style={styles.fabIcon}>+</Text>
         </TouchableOpacity>
       )}
-    </View>
+    </ScreenContainer>
   );
 }
 
 const createStyles = (colors: Colors) => ({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-  },
   listHeader: {
     paddingBottom: spacing.xl,
-  },
-  screenTitle: {
-    ...heading.h2,
-    color: colors.textPrimary,
-  },
-  screenSubtitle: {
-    ...body.md,
-    color: colors.textSecondary,
-    marginTop: 4,
   },
   card: {
     backgroundColor: colors.white,

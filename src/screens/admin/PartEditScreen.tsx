@@ -7,28 +7,15 @@ import { ScreenContainer } from '@/components/layout';
 import { LoadingScreen, EmptyState } from '@/components/ui';
 import { FormInput, FormCurrency, FormSelect } from '@/components/forms';
 import { spacing, heading, body, borderRadius } from '@/theme';
-import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
-import type { Part } from '@/types';
-
-const CATEGORY_OPTIONS = [
-  { label: 'Motor', value: 'Motor' },
-  { label: 'Transmissao', value: 'Transmissao' },
-  { label: 'Suspensao', value: 'Suspensao' },
-  { label: 'Freios', value: 'Freios' },
-  { label: 'Eletrica', value: 'Eletrica' },
-  { label: 'Carroceria', value: 'Carroceria' },
-  { label: 'Fluidos', value: 'Fluidos' },
-  { label: 'Filtros', value: 'Filtros' },
-  { label: 'Outros', value: 'Outros' },
-];
+import type { SelectOption } from '@/types';
 
 interface FormData {
   name: string;
   part_number: string;
-  brand: string;
-  category: string;
+  brand_id: string;
+  category_id: string;
   description: string;
   unit_price: number;
   stock_quantity: number;
@@ -38,28 +25,30 @@ interface FormData {
 interface FormErrors {
   name?: string;
   part_number?: string;
-  brand?: string;
-  category?: string;
+  brand_id?: string;
+  category_id?: string;
   unit_price?: string;
   stock_quantity?: string;
   min_stock?: string;
 }
 
 export default function PartEditScreen() {
-  const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const { uuid } = useLocalSearchParams<{ uuid: string }>();
   const router = useRouter();
 
-  const [part, setPart] = useState<Part | null>(null);
+  const [part, setPart] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [categoryOptions, setCategoryOptions] = useState<SelectOption[]>([]);
+  const [brandOptions, setBrandOptions] = useState<SelectOption[]>([]);
 
   const [form, setForm] = useState<FormData>({
     name: '',
     part_number: '',
-    brand: '',
-    category: '',
+    brand_id: '',
+    category_id: '',
     description: '',
     unit_price: 0,
     stock_quantity: 0,
@@ -68,18 +57,33 @@ export default function PartEditScreen() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const [catRes, brandRes] = await Promise.all([
+          adminApi.getCategories({ active: true, per_page: 100 }),
+          adminApi.getBrands({ active: true, type: 'part', per_page: 100 }),
+        ]);
+        const cats = catRes.data || catRes;
+        setCategoryOptions(cats.map((c: any) => ({ label: c.name, value: c.id })));
+        const brands = brandRes.data || brandRes;
+        setBrandOptions(brands.map((b: any) => ({ label: b.name, value: b.id })));
+      } catch {}
+    })();
+  }, []);
+
   const fetchPart = useCallback(async () => {
     try {
       setError(null);
       const response = await adminApi.getPart(uuid!);
-      const p: Part = (response as any)?.data ?? response;
+      const p: any = (response as any)?.data ?? response;
       setPart(p);
 
       setForm({
         name: p.name,
         part_number: p.part_number || '',
-        brand: p.brand || '',
-        category: p.category || '',
+        brand_id: p.brand_id || '',
+        category_id: p.category_id || '',
         description: p.description || '',
         unit_price: p.unit_price,
         stock_quantity: p.stock_quantity,
@@ -119,11 +123,8 @@ export default function PartEditScreen() {
     if (!form.part_number.trim()) {
       newErrors.part_number = 'Numero da peca e obrigatorio';
     }
-    if (!form.brand.trim()) {
-      newErrors.brand = 'Fabricante e obrigatorio';
-    }
-    if (!form.category) {
-      newErrors.category = 'Categoria e obrigatoria';
+    if (!form.category_id) {
+      newErrors.category_id = 'Categoria e obrigatoria';
     }
     if (!form.unit_price || form.unit_price <= 0) {
       newErrors.unit_price = 'Preco unitario e obrigatorio';
@@ -147,16 +148,14 @@ export default function PartEditScreen() {
       const data: Record<string, any> = {
         name: form.name.trim(),
         part_number: form.part_number.trim(),
-        brand: form.brand.trim(),
-        category: form.category,
+        category_id: form.category_id,
         unit_price: form.unit_price,
         stock_quantity: form.stock_quantity,
         min_stock: form.min_stock,
       };
 
-      if (form.description.trim()) {
-        data.description = form.description.trim();
-      }
+      if (form.brand_id) data.brand_id = form.brand_id;
+      if (form.description.trim()) data.description = form.description.trim();
 
       await adminApi.updatePart(uuid!, data);
       Alert.alert('Sucesso', 'Peca atualizada com sucesso.', [
@@ -219,22 +218,22 @@ export default function PartEditScreen() {
           autoCapitalize="characters"
         />
 
-        <FormInput
-          label="Fabricante"
-          required
-          value={form.brand}
-          onChangeText={(text) => updateField('brand', text)}
-          error={errors.brand}
-          placeholder="Ex: Bosch"
+        <FormSelect
+          label="Marca"
+          value={form.brand_id}
+          options={brandOptions}
+          onValueChange={(value) => updateField('brand_id', value)}
+          error={errors.brand_id}
+          placeholder="Selecione a marca..."
         />
 
         <FormSelect
           label="Categoria"
           required
-          value={form.category}
-          options={CATEGORY_OPTIONS}
-          onValueChange={(value) => updateField('category', value)}
-          error={errors.category}
+          value={form.category_id}
+          options={categoryOptions}
+          onValueChange={(value) => updateField('category_id', value)}
+          error={errors.category_id}
           placeholder="Selecione a categoria..."
         />
 

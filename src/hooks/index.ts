@@ -5,3 +5,4 @@ export { useAdaptiveLayout } from './useAdaptiveLayout';
 export { useApi } from './useApi';
 export { useRefreshOnFocus } from './useRefreshOnFocus';
 export { useThemeStyles } from './useThemeStyles';
+export { useHeaderOptions } from './useHeaderOptions';

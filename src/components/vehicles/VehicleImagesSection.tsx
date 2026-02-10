@@ -2,7 +2,6 @@ import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
@@ -11,6 +10,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { adminApi } from '@/services/adminApi';
+import { FallbackImage } from '@/components/ui';
 import { usePermissions, useAdaptiveLayout } from '@/hooks';
 import { spacing, body, caption, heading, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
@@ -138,8 +138,9 @@ export function VehicleImagesSection({ vehicleId, images, onRefresh }: Props) {
             const isLoading = actionLoading === img.id;
             return (
               <View key={img.id} style={[styles.imageWrapper, { width: imageSize, height: imageSize }]}>
-                <Image
-                  source={{ uri: img.thumbnail || img.url }}
+                <FallbackImage
+                  uri={img.thumbnail || img.url}
+                  fallbackUri={img.url}
                   style={styles.image}
                   resizeMode="cover"
                 />
@@ -154,24 +155,24 @@ export function VehicleImagesSection({ vehicleId, images, onRefresh }: Props) {
                   </View>
                 )}
                 {can('vehicles.update') && !isLoading && (
-                  <View style={styles.imageActions}>
+                  <>
                     {!img.is_primary && (
                       <TouchableOpacity
-                        style={styles.imageActionBtn}
+                        style={styles.starBtn}
                         onPress={() => handleSetPrimary(img.id)}
                         activeOpacity={0.7}
                       >
-                        <Text style={styles.imageActionIcon}>★</Text>
+                        <Text style={styles.starIcon}>★</Text>
                       </TouchableOpacity>
                     )}
                     <TouchableOpacity
-                      style={[styles.imageActionBtn, styles.imageActionBtnDanger]}
+                      style={styles.deleteBtn}
                       onPress={() => handleDelete(img.id)}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.imageActionIconDanger}>✕</Text>
+                      <Text style={styles.deleteBtnIcon}>✕</Text>
                     </TouchableOpacity>
-                  </View>
+                  </>
                 )}
               </View>
             );
@@ -238,8 +239,8 @@ const createStyles = (colors: Colors) => ({
     backgroundColor: colors.gray100,
   },
   image: {
-    width: '100%',
-    height: '100%',
+    width: '100%' as const,
+    height: '100%' as const,
   },
   primaryBadge: {
     position: 'absolute' as const,
@@ -261,29 +262,33 @@ const createStyles = (colors: Colors) => ({
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
   },
-  imageActions: {
+  starBtn: {
     position: 'absolute' as const,
-    bottom: 4,
-    right: 4,
-    flexDirection: 'row' as const,
-    gap: 4,
-  },
-  imageActionBtn: {
+    top: 4,
+    left: 4,
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
   },
-  imageActionBtnDanger: {
-    backgroundColor: 'rgba(255,77,79,0.8)',
-  },
-  imageActionIcon: {
+  starIcon: {
     fontSize: 14,
     color: colors.warning,
   },
-  imageActionIconDanger: {
+  deleteBtn: {
+    position: 'absolute' as const,
+    bottom: 4,
+    right: 4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,77,79,0.9)',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  deleteBtnIcon: {
     fontSize: 12,
     fontWeight: '700' as const,
     color: colors.white,

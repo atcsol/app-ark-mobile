@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, Alert, StyleSheet } from 'react-native';
+import { View, Text, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button } from '@ant-design/react-native';
 import { adminApi } from '@/services/adminApi';
@@ -7,61 +7,65 @@ import { ScreenContainer } from '@/components/layout';
 import { LoadingScreen, EmptyState } from '@/components/ui';
 import { FormInput } from '@/components/forms/FormInput';
 import { FormCurrency } from '@/components/forms/FormCurrency';
+import { FormSelect } from '@/components/forms/FormSelect';
 import { spacing, heading, body, borderRadius } from '@/theme';
-import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
-
-interface ServiceCatalog {
-  id: number;
-  uuid: string;
-  name: string;
-  description?: string;
-  base_price: number;
-  category?: string;
-}
+import type { SelectOption } from '@/types';
 
 interface ServiceForm {
   name: string;
   description: string;
-  category: string;
+  category_id: string;
   base_price: number;
 }
 
 interface FormErrors {
   name?: string;
+  category_id?: string;
   base_price?: string;
 }
 
 export default function ServiceEditScreen() {
   const { uuid } = useLocalSearchParams<{ uuid: string }>();
   const router = useRouter();
-  const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
 
-  const [service, setService] = useState<ServiceCatalog | null>(null);
+  const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [categoryOptions, setCategoryOptions] = useState<SelectOption[]>([]);
   const [form, setForm] = useState<ServiceForm>({
     name: '',
     description: '',
-    category: '',
+    category_id: '',
     base_price: 0,
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await adminApi.getCategories({ active: true, per_page: 100 });
+        const cats = res.data || res;
+        setCategoryOptions(cats.map((c: any) => ({ label: c.name, value: c.id })));
+      } catch {}
+    })();
+  }, []);
+
   const fetchService = useCallback(async () => {
     try {
       setError(null);
-      const data = await adminApi.getService(uuid!);
+      const response = await adminApi.getService(uuid!);
+      const data: any = (response as any)?.data ?? response;
       setService(data);
       setForm({
         name: data.name,
         description: data.description || '',
-        category: data.category || '',
-        base_price: data.base_price,
+        category_id: data.category_id || '',
+        base_price: data.base_price || data.default_price || 0,
       });
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || 'Erro ao carregar servico';
@@ -103,7 +107,7 @@ export default function ServiceEditScreen() {
         base_price: form.base_price,
       };
       if (form.description.trim()) data.description = form.description.trim();
-      if (form.category.trim()) data.category = form.category.trim();
+      if (form.category_id) data.category_id = form.category_id;
 
       await adminApi.updateService(uuid!, data);
       Alert.alert('Sucesso', 'Servico atualizado com sucesso.', [
@@ -162,11 +166,13 @@ export default function ServiceEditScreen() {
           style={styles.textArea}
         />
 
-        <FormInput
+        <FormSelect
           label="Categoria"
-          value={form.category}
-          onChangeText={(text) => updateField('category', text)}
-          placeholder="Ex: Mecanica, Eletrica..."
+          value={form.category_id}
+          options={categoryOptions}
+          onValueChange={(value) => updateField('category_id', value)}
+          error={errors.category_id}
+          placeholder="Selecione a categoria..."
         />
 
         <FormCurrency

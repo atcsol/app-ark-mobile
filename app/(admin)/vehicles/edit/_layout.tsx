@@ -1,27 +1,11 @@
-import { Stack, useRouter } from 'expo-router';
-import { TouchableOpacity, Text } from 'react-native';
-import { useTheme } from '@/theme/ThemeContext';
-
-function BackButton() {
-  const router = useRouter();
-  const { colors } = useTheme();
-  return (
-    <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 8 }}>
-      <Text style={{ fontSize: 16, color: colors.textPrimary }}>‹ Voltar</Text>
-    </TouchableOpacity>
-  );
-}
+import { Stack } from 'expo-router';
+import { useHeaderOptions } from '@/hooks';
+import { BackButton } from '@/components/navigation/HeaderNav';
 
 export default function VehicleEditLayout() {
-  const { colors } = useTheme();
+  const screenOptions = useHeaderOptions();
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: colors.background },
-        headerShadowVisible: false,
-        headerTintColor: colors.textPrimary,
-      }}
-    >
+    <Stack screenOptions={screenOptions}>
       <Stack.Screen
         name="[uuid]"
         options={{

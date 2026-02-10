@@ -3,8 +3,9 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { adminApi } from '@/services/adminApi';
 import { SearchBar, RefreshableList, LoadingScreen, EmptyState, FilterChips } from '@/components/ui';
+import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { VehicleCard } from '@/components/vehicles';
-import { usePermissions, useRefreshOnFocus } from '@/hooks';
+import { usePermissions, useRefreshOnFocus, useAdaptiveLayout } from '@/hooks';
 import { spacing, heading, body, caption, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
@@ -25,6 +26,7 @@ export default function VehiclesScreen() {
   const styles = useThemeStyles(createStyles);
   const router = useRouter();
   const { can } = usePermissions();
+  const { listContentStyle } = useAdaptiveLayout();
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,8 +127,7 @@ export default function VehiclesScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      <Text style={styles.screenTitle}>Veiculos</Text>
-      <Text style={styles.screenSubtitle}>Gerencie os veiculos cadastrados</Text>
+      <ScreenHeader title="Veiculos" subtitle="Gerencie os veiculos cadastrados" />
 
       <View style={styles.searchContainer}>
         <SearchBar
@@ -152,23 +153,21 @@ export default function VehiclesScreen() {
 
   if (error && vehicles.length === 0) {
     return (
-      <View style={styles.container}>
+      <ScreenContainer>
         <EmptyState
           title="Erro ao carregar"
           description={error}
         />
-      </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable={false} padded={false}>
       <RefreshableList
         data={vehicles}
         renderItem={({ item }) => (
-          <View style={styles.cardWrapper}>
-            <VehicleCard vehicle={item} onPress={handleVehiclePress} />
-          </View>
+          <VehicleCard vehicle={item} onPress={handleVehiclePress} />
         )}
         keyExtractor={(item) => item.uuid}
         refreshing={refreshing}
@@ -179,7 +178,7 @@ export default function VehiclesScreen() {
         ListHeaderComponent={renderHeader()}
         emptyTitle="Nenhum veiculo encontrado"
         emptyDescription="Nao ha veiculos que correspondam aos filtros selecionados."
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={listContentStyle}
       />
 
       {can('vehicles.create') && (
@@ -191,30 +190,13 @@ export default function VehiclesScreen() {
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       )}
-    </View>
+    </ScreenContainer>
   );
 }
 
 const createStyles = (colors: Colors) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    paddingBottom: spacing.xxxl + spacing.xxl,
-  },
   headerContainer: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
-  },
-  screenTitle: {
-    ...heading.h2,
-    color: colors.textPrimary,
-  },
-  screenSubtitle: {
-    ...body.md,
-    color: colors.textSecondary,
-    marginTop: 4,
   },
   searchContainer: {
     marginTop: spacing.lg,
@@ -224,10 +206,6 @@ const createStyles = (colors: Colors) => StyleSheet.create({
     flexWrap: 'wrap' as const,
     gap: spacing.sm,
     marginTop: spacing.md,
-  },
-  cardWrapper: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
   },
   fab: {
     position: 'absolute' as const,

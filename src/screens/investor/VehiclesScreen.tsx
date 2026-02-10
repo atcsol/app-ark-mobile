@@ -2,9 +2,10 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { investorApi } from '@/services/investorApi';
+import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { SearchBar, RefreshableList, LoadingScreen, EmptyState } from '@/components/ui';
 import { VehicleStatusBadge } from '@/components/vehicles';
-import { useRefreshOnFocus } from '@/hooks';
+import { useRefreshOnFocus, useAdaptiveLayout } from '@/hooks';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
@@ -16,6 +17,7 @@ export default function InvestorVehiclesScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
+  const { listContentStyle } = useAdaptiveLayout();
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,8 +143,7 @@ export default function InvestorVehiclesScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      <Text style={styles.screenTitle}>Meus Investimentos</Text>
-      <Text style={styles.screenSubtitle}>Veiculos em que voce investiu</Text>
+      <ScreenHeader title="Meus Investimentos" subtitle="Veiculos em que voce investiu" />
 
       <View style={styles.searchContainer}>
         <SearchBar
@@ -160,14 +161,14 @@ export default function InvestorVehiclesScreen() {
 
   if (error && vehicles.length === 0) {
     return (
-      <View style={styles.container}>
+      <ScreenContainer>
         <EmptyState title="Erro ao carregar" description={error} />
-      </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable={false} padded={false}>
       <RefreshableList
         data={filteredVehicles}
         renderItem={renderInvestmentCard}
@@ -177,38 +178,20 @@ export default function InvestorVehiclesScreen() {
         ListHeaderComponent={renderHeader()}
         emptyTitle="Nenhum investimento encontrado"
         emptyDescription="Voce ainda nao possui investimentos em veiculos."
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={listContentStyle}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 
 const createStyles = (colors: Colors) => ({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    paddingBottom: spacing.xxxl,
-  },
   headerContainer: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
-  },
-  screenTitle: {
-    ...heading.h2,
-    color: colors.textPrimary,
-  },
-  screenSubtitle: {
-    ...body.md,
-    color: colors.textSecondary,
-    marginTop: 4,
   },
   searchContainer: {
     marginTop: spacing.lg,
   },
   cardWrapper: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
   },
   investmentCard: {

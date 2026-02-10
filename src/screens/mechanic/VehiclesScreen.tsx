@@ -1,20 +1,20 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { mechanicApi } from '@/services/mechanicApi';
+import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { SearchBar, RefreshableList, LoadingScreen, EmptyState } from '@/components/ui';
 import { VehicleCard } from '@/components/vehicles';
-import { useRefreshOnFocus } from '@/hooks';
-import { spacing, heading, body, caption, borderRadius } from '@/theme';
-import { useTheme } from '@/theme/ThemeContext';
+import { useRefreshOnFocus, useAdaptiveLayout } from '@/hooks';
+import { spacing } from '@/theme';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
 import type { Vehicle } from '@/types';
 
 export default function VehiclesScreen() {
-  const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const router = useRouter();
+  const { listContentStyle } = useAdaptiveLayout();
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,8 +73,7 @@ export default function VehiclesScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      <Text style={styles.screenTitle}>Meus Veiculos</Text>
-      <Text style={styles.screenSubtitle}>Veiculos atribuidos a voce</Text>
+      <ScreenHeader title="Meus Veiculos" subtitle="Veiculos atribuidos a voce" />
 
       <View style={styles.searchContainer}>
         <SearchBar
@@ -92,17 +91,17 @@ export default function VehiclesScreen() {
 
   if (error && vehicles.length === 0) {
     return (
-      <View style={styles.container}>
+      <ScreenContainer>
         <EmptyState
           title="Erro ao carregar"
           description={error}
         />
-      </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable={false} padded={false}>
       <RefreshableList
         data={filteredVehicles}
         renderItem={({ item }) => (
@@ -116,38 +115,20 @@ export default function VehiclesScreen() {
         ListHeaderComponent={renderHeader()}
         emptyTitle="Nenhum veiculo encontrado"
         emptyDescription="Nao ha veiculos atribuidos a voce."
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={listContentStyle}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 
 const createStyles = (colors: Colors) => ({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    paddingBottom: spacing.xxxl + spacing.xxl,
-  },
   headerContainer: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
-  },
-  screenTitle: {
-    ...heading.h2,
-    color: colors.textPrimary,
-  },
-  screenSubtitle: {
-    ...body.md,
-    color: colors.textSecondary,
-    marginTop: 4,
   },
   searchContainer: {
     marginTop: spacing.lg,
   },
   cardWrapper: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
   },
 });

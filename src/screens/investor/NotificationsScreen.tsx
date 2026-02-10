@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { investorApi } from '@/services/investorApi';
+import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { RefreshableList, LoadingScreen, EmptyState } from '@/components/ui';
-import { useRefreshOnFocus } from '@/hooks';
+import { useRefreshOnFocus, useAdaptiveLayout } from '@/hooks';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
-import { spacing, heading, body, caption, borderRadius } from '@/theme';
+import { spacing, body, caption, borderRadius } from '@/theme';
 import { formatRelativeDate } from '@/utils/formatters';
 import type { InvestorNotification } from '@/types';
 
@@ -22,6 +23,7 @@ const NOTIFICATION_TYPE_COLORS: Record<string, string> = {
 export default function InvestorNotificationsScreen() {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
+  const { listContentStyle } = useAdaptiveLayout();
 
   const [notifications, setNotifications] = useState<InvestorNotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,8 +151,7 @@ export default function InvestorNotificationsScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      <Text style={styles.screenTitle}>Notificacoes</Text>
-      <Text style={styles.screenSubtitle}>Acompanhe as atualizacoes</Text>
+      <ScreenHeader title="Notificacoes" subtitle="Acompanhe as atualizacoes" />
 
       {unreadCount > 0 && (
         <TouchableOpacity
@@ -173,14 +174,14 @@ export default function InvestorNotificationsScreen() {
 
   if (error && notifications.length === 0) {
     return (
-      <View style={styles.container}>
+      <ScreenContainer>
         <EmptyState title="Erro ao carregar" description={error} />
-      </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer scrollable={false} padded={false}>
       <RefreshableList
         data={notifications}
         renderItem={renderNotificationCard}
@@ -190,9 +191,9 @@ export default function InvestorNotificationsScreen() {
         ListHeaderComponent={renderHeader()}
         emptyTitle="Nenhuma notificacao"
         emptyDescription="Voce nao possui notificacoes no momento."
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={listContentStyle}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 
@@ -209,26 +210,9 @@ function getTypeLabel(type: string): string {
 }
 
 const createStyles = (colors: Colors) => ({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    paddingBottom: spacing.xxxl,
-  },
   headerContainer: {
-    paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
     paddingBottom: spacing.md,
-  },
-  screenTitle: {
-    ...heading.h2,
-    color: colors.textPrimary,
-  },
-  screenSubtitle: {
-    ...body.md,
-    color: colors.textSecondary,
-    marginTop: 4,
   },
   markAllButton: {
     marginTop: spacing.lg,
@@ -244,7 +228,6 @@ const createStyles = (colors: Colors) => ({
     color: colors.white,
   },
   cardWrapper: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
   },
   notificationCard: {

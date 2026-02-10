@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { ScreenContainer } from '@/components/layout';
+import { useAdaptiveLayout } from '@/hooks';
 import { spacing, body, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
@@ -37,44 +39,39 @@ const MENU_SECTIONS = [
 export default function MenuScreen() {
   const router = useRouter();
   const styles = useThemeStyles(createStyles);
+  const { listContentStyle } = useAdaptiveLayout();
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {MENU_SECTIONS.map((section) => (
-        <View key={section.title} style={styles.section}>
-          <Text style={styles.sectionTitle}>{section.title}</Text>
-          <View style={styles.card}>
-            {section.items.map((item, index) => (
-              <TouchableOpacity
-                key={item.route}
-                style={[
-                  styles.menuItem,
-                  index < section.items.length - 1 && styles.menuItemBorder,
-                ]}
-                onPress={() => router.push(item.route as any)}
-                activeOpacity={0.6}
-              >
-                <Text style={styles.menuIcon}>{item.icon}</Text>
-                <Text style={styles.menuLabel}>{item.label}</Text>
-                <Text style={styles.menuArrow}>›</Text>
-              </TouchableOpacity>
-            ))}
+    <ScreenContainer>
+      <View style={{ paddingHorizontal: listContentStyle.paddingHorizontal }}>
+        {MENU_SECTIONS.map((section) => (
+          <View key={section.title} style={styles.section}>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+            <View style={styles.card}>
+              {section.items.map((item, index) => (
+                <TouchableOpacity
+                  key={item.route}
+                  style={[
+                    styles.menuItem,
+                    index < section.items.length - 1 && styles.menuItemBorder,
+                  ]}
+                  onPress={() => router.push(item.route as any)}
+                  activeOpacity={0.6}
+                >
+                  <Text style={styles.menuIcon}>{item.icon}</Text>
+                  <Text style={styles.menuLabel}>{item.label}</Text>
+                  <Text style={styles.menuArrow}>›</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
-      ))}
-    </ScrollView>
+        ))}
+      </View>
+    </ScreenContainer>
   );
 }
 
 const createStyles = (colors: Colors) => ({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxxl,
-  },
   section: {
     marginBottom: spacing.xl,
   },

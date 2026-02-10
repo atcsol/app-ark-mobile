@@ -4,6 +4,7 @@
  */
 
 import type { VehicleService } from './service';
+import type { Brand } from './part';
 
 // ---------------------------------------------------------------------------
 // Vehicle Status
@@ -48,7 +49,9 @@ export interface Vehicle {
   id: number;
   uuid: string;
   vin_number: string;
-  brand: string;
+  brand_name?: string;
+  brand_id?: string;
+  brand?: Brand;
   model: string;
   year: number;
   full_name: string;
