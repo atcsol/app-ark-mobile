@@ -59,9 +59,15 @@ export default function PartCreateScreen() {
           adminApi.getBrands({ active: true, type: 'part', per_page: 100 }),
         ]);
         const cats = catRes.data || catRes;
-        setCategoryOptions(cats.map((c: any) => ({ label: c.name, value: c.id })));
+        setCategoryOptions(
+          cats.map((c: any) => ({ label: c.name, value: c.id }))
+            .sort((a: any, b: any) => a.label.localeCompare(b.label))
+        );
         const brands = brandRes.data || brandRes;
-        setBrandOptions(brands.map((b: any) => ({ label: b.name, value: b.id })));
+        setBrandOptions(
+          brands.map((b: any) => ({ label: b.name, value: b.id }))
+            .sort((a: any, b: any) => a.label.localeCompare(b.label))
+        );
       } catch {}
     })();
   }, []);

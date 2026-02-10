@@ -50,7 +50,10 @@ export default function ServiceEditScreen() {
       try {
         const res = await adminApi.getCategories({ active: true, per_page: 100 });
         const cats = res.data || res;
-        setCategoryOptions(cats.map((c: any) => ({ label: c.name, value: c.id })));
+        setCategoryOptions(
+          cats.map((c: any) => ({ label: c.name, value: c.id }))
+            .sort((a: any, b: any) => a.label.localeCompare(b.label))
+        );
       } catch {}
     })();
   }, []);

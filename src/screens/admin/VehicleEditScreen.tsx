@@ -62,6 +62,7 @@ export default function VehicleEditScreen() {
         setBrands(brandList);
         setBrandOptions(
           brandList.map((b) => ({ label: b.name, value: String(b.id) }))
+            .sort((a, b) => a.label.localeCompare(b.label))
         );
       } catch (err) {
         console.error('Error loading brands:', err);
