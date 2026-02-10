@@ -1,13 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Alert, TextInput } from 'react-native';
-import { Modal, Button } from '@ant-design/react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { WhiteSpace } from '@ant-design/react-native';
+import { useRouter } from 'expo-router';
 import { adminApi } from '@/services/adminApi';
 import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { SearchBar, LoadingScreen, EmptyState, RefreshableList, ConfirmModal, FilterChips } from '@/components/ui';
 import type { FilterOption } from '@/components/ui';
 import { heading, body, caption, spacing, borderRadius } from '@/theme';
-import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
 import { usePermissions, useAdaptiveLayout } from '@/hooks';
@@ -32,22 +31,16 @@ const TYPE_LABELS: Record<string, string> = {
   both: 'Ambos',
 };
 
-const TYPE_OPTIONS: { label: string; value: 'vehicle' | 'part' | 'both' }[] = [
-  { label: 'Veiculo', value: 'vehicle' },
-  { label: 'Peca', value: 'part' },
-  { label: 'Ambos', value: 'both' },
-];
-
 function getTypeColor(type?: string) {
   if (!type) return TYPE_COLORS.default;
   return TYPE_COLORS[type] || TYPE_COLORS.default;
 }
 
 export default function BrandsScreen() {
-  const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const { can } = usePermissions();
   const { listContentStyle } = useAdaptiveLayout();
+  const router = useRouter();
 
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,13 +52,6 @@ export default function BrandsScreen() {
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState<Brand | null>(null);
   const [deleting, setDeleting] = useState(false);
-
-  // Create/Edit modal state
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
-  const [formName, setFormName] = useState('');
-  const [formType, setFormType] = useState<'vehicle' | 'part' | 'both'>('vehicle');
-  const [saving, setSaving] = useState(false);
 
   const fetchBrands = useCallback(async () => {
     try {
@@ -96,20 +82,14 @@ export default function BrandsScreen() {
   const handleBrandPress = useCallback(
     (brand: Brand) => {
       if (!can('brands.update')) return;
-      setEditingBrand(brand);
-      setFormName(brand.name);
-      setFormType(brand.type || 'vehicle');
-      setModalVisible(true);
+      router.push(`/(admin)/brands/edit/${brand.id}`);
     },
-    [can],
+    [can, router],
   );
 
   const handleCreate = useCallback(() => {
-    setEditingBrand(null);
-    setFormName('');
-    setFormType('vehicle');
-    setModalVisible(true);
-  }, []);
+    router.push('/(admin)/brands/create');
+  }, [router]);
 
   const handleLongPress = useCallback((brand: Brand) => {
     if (!can('brands.delete')) return;
@@ -130,43 +110,6 @@ export default function BrandsScreen() {
       setDeleting(false);
     }
   }, [deleteTarget, fetchBrands]);
-
-  const handleModalCancel = useCallback(() => {
-    setModalVisible(false);
-    setEditingBrand(null);
-    setFormName('');
-    setFormType('vehicle');
-  }, []);
-
-  const handleModalSave = useCallback(async () => {
-    if (!formName.trim()) {
-      Alert.alert('Erro', 'O nome da marca e obrigatorio.');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const payload = { name: formName.trim(), type: formType };
-
-      if (editingBrand) {
-        await adminApi.updateBrand(editingBrand.id, payload);
-      } else {
-        await adminApi.createBrand(payload);
-      }
-
-      setModalVisible(false);
-      setEditingBrand(null);
-      setFormName('');
-      setFormType('vehicle');
-      fetchBrands();
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || err.message || 'Erro ao salvar marca';
-      Alert.alert('Erro', message);
-    } finally {
-      setSaving(false);
-    }
-  }, [editingBrand, formName, formType, fetchBrands]);
 
   if (loading) {
     return <LoadingScreen message="Carregando marcas..." />;
@@ -267,78 +210,6 @@ export default function BrandsScreen() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
-
-      {/* Create/Edit Modal */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        maskClosable={!saving}
-        onClose={handleModalCancel}
-        animationType="fade"
-      >
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>
-            {editingBrand ? 'Editar Marca' : 'Nova Marca'}
-          </Text>
-
-          <Text style={styles.fieldLabel}>Nome</Text>
-          <TextInput
-            style={styles.textInput}
-            value={formName}
-            onChangeText={setFormName}
-            placeholder="Nome da marca"
-            placeholderTextColor={colors.textPlaceholder}
-            autoFocus
-          />
-
-          <Text style={styles.fieldLabel}>Tipo</Text>
-          <View style={styles.typePickerRow}>
-            {TYPE_OPTIONS.map((opt) => {
-              const selected = formType === opt.value;
-              const optColor = TYPE_COLORS[opt.value];
-              return (
-                <TouchableOpacity
-                  key={opt.value}
-                  style={[
-                    styles.typePickerOption,
-                    selected && { backgroundColor: optColor.bg, borderColor: optColor.text },
-                  ]}
-                  onPress={() => setFormType(opt.value)}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={[
-                      styles.typePickerText,
-                      selected && { color: optColor.text, fontWeight: '600' as const },
-                    ]}
-                  >
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          <View style={styles.modalButtons}>
-            <Button
-              style={styles.cancelBtn}
-              onPress={handleModalCancel}
-              disabled={saving}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="primary"
-              style={styles.confirmBtn}
-              onPress={handleModalSave}
-              disabled={saving || !formName.trim()}
-              loading={saving}
-            >
-              {editingBrand ? 'Salvar' : 'Criar'}
-            </Button>
-          </View>
-        </View>
-      </Modal>
     </ScreenContainer>
   );
 }
@@ -423,58 +294,5 @@ const createStyles = (colors: Colors) => ({
     color: colors.white,
     lineHeight: 30,
     fontWeight: '300' as const,
-  },
-
-  // Create/Edit Modal styles
-  modalContent: {
-    padding: spacing.xl,
-  },
-  modalTitle: {
-    ...heading.h3,
-    color: colors.textPrimary,
-    marginBottom: spacing.lg,
-  },
-  fieldLabel: {
-    ...caption.md,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-    fontWeight: '600' as const,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    ...body.md,
-    color: colors.textPrimary,
-    marginBottom: spacing.lg,
-  },
-  typePickerRow: {
-    flexDirection: 'row' as const,
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  typePickerOption: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center' as const,
-  },
-  typePickerText: {
-    ...body.sm,
-    color: colors.textSecondary,
-  },
-  modalButtons: {
-    flexDirection: 'row' as const,
-    gap: spacing.md,
-  },
-  cancelBtn: {
-    flex: 1,
-  },
-  confirmBtn: {
-    flex: 1,
   },
 });

@@ -5,17 +5,17 @@ import { Button } from '@ant-design/react-native';
 import { adminApi } from '@/services/adminApi';
 import { ScreenContainer } from '@/components/layout';
 import { LoadingScreen, EmptyState } from '@/components/ui';
-import { FormInput, FormCurrency, FormDatePicker } from '@/components/forms';
+import { FormInput, FormCurrency, FormDatePicker, FormSelect } from '@/components/forms';
 import { spacing, heading, body, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
-import type { Vehicle, VehicleFormData } from '@/types';
+import type { Vehicle, VehicleFormData, SelectOption } from '@/types';
+import type { Brand } from '@/types/part';
 
 interface FormErrors {
   vin_number?: string;
   brand?: string;
-  model?: string;
   year?: string;
   purchase_value?: string;
 }
@@ -32,6 +32,7 @@ export default function VehicleEditScreen() {
 
   const [form, setForm] = useState<VehicleFormData>({
     vin_number: '',
+    brand_id: undefined,
     brand: '',
     model: '',
     year: new Date().getFullYear(),
@@ -45,6 +46,45 @@ export default function VehicleEditScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [purchaseDate, setPurchaseDate] = useState<Date | undefined>(undefined);
 
+  // Brand & Model state
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [brandOptions, setBrandOptions] = useState<SelectOption[]>([]);
+  const [modelOptions, setModelOptions] = useState<SelectOption[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [decodingVin, setDecodingVin] = useState(false);
+
+  // Load brands on mount
+  useEffect(() => {
+    const loadBrands = async () => {
+      try {
+        const response = await adminApi.getBrands({ type: 'vehicle', active: true, per_page: 500 });
+        const brandList: Brand[] = response?.data || response || [];
+        setBrands(brandList);
+        setBrandOptions(
+          brandList.map((b) => ({ label: b.name, value: String(b.id) }))
+        );
+      } catch (err) {
+        console.error('Error loading brands:', err);
+      }
+    };
+    loadBrands();
+  }, []);
+
+  const loadModelsForBrand = useCallback(async (brandName: string) => {
+    try {
+      setLoadingModels(true);
+      const response = await adminApi.getVehicleModels(brandName);
+      const models = response?.data || response || [];
+      setModelOptions(
+        models.map((m: any) => ({ label: m.model_name, value: m.model_name }))
+      );
+    } catch (err) {
+      console.error('Error loading models:', err);
+    } finally {
+      setLoadingModels(false);
+    }
+  }, []);
+
   const fetchVehicle = useCallback(async () => {
     try {
       setError(null);
@@ -52,9 +92,13 @@ export default function VehicleEditScreen() {
       const v: Vehicle = response;
       setVehicle(v);
 
+      const brandName = v.brand?.name || v.brand_name || (v as any).brand || '';
+      const brandId = v.brand_id || v.brand?.id || undefined;
+
       setForm({
         vin_number: v.vin_number,
-        brand: v.brand,
+        brand_id: brandId,
+        brand: brandName,
         model: v.model,
         year: v.year,
         color: v.color || '',
@@ -67,6 +111,11 @@ export default function VehicleEditScreen() {
       if (v.purchase_date) {
         setPurchaseDate(new Date(v.purchase_date));
       }
+
+      // Load models for current brand
+      if (brandName) {
+        loadModelsForBrand(brandName);
+      }
     } catch (err: any) {
       const message =
         err.response?.data?.message || err.message || 'Erro ao carregar veiculo';
@@ -74,7 +123,7 @@ export default function VehicleEditScreen() {
     } finally {
       setLoading(false);
     }
-  }, [uuid]);
+  }, [uuid, loadModelsForBrand]);
 
   useEffect(() => {
     if (uuid) {
@@ -92,17 +141,89 @@ export default function VehicleEditScreen() {
     [errors],
   );
 
+  const handleBrandChange = useCallback(
+    async (brandId: string) => {
+      const selectedBrand = brands.find((b) => String(b.id) === brandId);
+      updateField('brand_id', brandId);
+      updateField('brand', selectedBrand?.name || '');
+      updateField('model', '');
+      setModelOptions([]);
+
+      if (selectedBrand) {
+        loadModelsForBrand(selectedBrand.name);
+      }
+    },
+    [brands, updateField, loadModelsForBrand],
+  );
+
+  const handleModelChange = useCallback(
+    (modelName: string) => {
+      updateField('model', modelName);
+    },
+    [updateField],
+  );
+
+  const handleVinChange = useCallback(
+    async (text: string) => {
+      const vin = text.toUpperCase().trim();
+      updateField('vin_number', vin);
+
+      if (vin.length === 17) {
+        try {
+          setDecodingVin(true);
+          const response = await adminApi.decodeVin(vin);
+          const vinData = response?.data || response;
+          if (!vinData) return;
+
+          if (vinData.year) updateField('year', Number(vinData.year));
+          if (vinData.color) updateField('color', vinData.color);
+
+          if (vinData.brand) {
+            const matchingBrand = brands.find(
+              (b) => b.name.toLowerCase() === vinData.brand.toLowerCase()
+            );
+            if (matchingBrand) {
+              updateField('brand_id', String(matchingBrand.id));
+              updateField('brand', matchingBrand.name);
+
+              try {
+                setLoadingModels(true);
+                const modelsResponse = await adminApi.getVehicleModels(matchingBrand.name);
+                const models = modelsResponse?.data || modelsResponse || [];
+                const opts = models.map((m: any) => ({ label: m.model_name, value: m.model_name }));
+                setModelOptions(opts);
+
+                if (vinData.model) {
+                  const matchingModel = models.find(
+                    (m: any) => m.model_name.toLowerCase() === vinData.model.toLowerCase()
+                  );
+                  updateField('model', matchingModel ? matchingModel.model_name : vinData.model);
+                }
+              } catch (err) {
+                console.error('Error loading models after VIN decode:', err);
+              } finally {
+                setLoadingModels(false);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('VIN decode failed:', err);
+        } finally {
+          setDecodingVin(false);
+        }
+      }
+    },
+    [brands, updateField],
+  );
+
   const validate = useCallback((): boolean => {
     const newErrors: FormErrors = {};
 
     if (!form.vin_number.trim()) {
       newErrors.vin_number = 'VIN e obrigatorio';
     }
-    if (!form.brand.trim()) {
+    if (!form.brand) {
       newErrors.brand = 'Marca e obrigatoria';
-    }
-    if (!form.model.trim()) {
-      newErrors.model = 'Modelo e obrigatorio';
     }
     if (!form.year || form.year < 1900 || form.year > new Date().getFullYear() + 2) {
       newErrors.year = 'Ano invalido';
@@ -122,12 +243,12 @@ export default function VehicleEditScreen() {
       setSubmitting(true);
       const data: Record<string, any> = {
         vin_number: form.vin_number.trim(),
-        brand: form.brand.trim(),
-        model: form.model.trim(),
+        model: form.model,
         year: form.year,
         purchase_value: form.purchase_value,
       };
 
+      if (form.brand_id) data.brand_id = form.brand_id;
       if (form.color?.trim()) data.color = form.color.trim();
       if (form.mileage) data.mileage = form.mileage;
       if (form.purchase_date) data.purchase_date = form.purchase_date;
@@ -188,28 +309,39 @@ export default function VehicleEditScreen() {
           label="Numero VIN"
           required
           value={form.vin_number}
-          onChangeText={(text) => updateField('vin_number', text)}
+          onChangeText={handleVinChange}
           error={errors.vin_number}
           placeholder="Ex: 1HGCM82633A004352"
           autoCapitalize="characters"
+          maxLength={17}
         />
 
-        <FormInput
+        {decodingVin && (
+          <Text style={{ ...body.sm, color: colors.accent, marginBottom: spacing.sm }}>
+            Consultando dados do VIN...
+          </Text>
+        )}
+
+        <FormSelect
           label="Marca"
           required
-          value={form.brand}
-          onChangeText={(text) => updateField('brand', text)}
+          value={form.brand_id ? String(form.brand_id) : undefined}
+          options={brandOptions}
+          onValueChange={handleBrandChange}
           error={errors.brand}
-          placeholder="Ex: Honda"
+          placeholder="Selecione a marca..."
+          searchable
         />
 
-        <FormInput
+        <FormSelect
           label="Modelo"
-          required
-          value={form.model}
-          onChangeText={(text) => updateField('model', text)}
+          value={form.model || undefined}
+          options={modelOptions}
+          onValueChange={handleModelChange}
           error={errors.model}
-          placeholder="Ex: Civic"
+          placeholder={loadingModels ? 'Carregando modelos...' : 'Selecione o modelo...'}
+          disabled={!form.brand_id || loadingModels}
+          searchable
         />
 
         <FormInput

@@ -90,6 +90,7 @@ export interface Vehicle {
 
 export interface VehicleFormData {
   vin_number: string;
+  brand_id?: string;
   brand: string;
   model: string;
   year: number;

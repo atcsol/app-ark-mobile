@@ -169,6 +169,13 @@ export const adminApi = {
   updateCategory: (id: string, data: any) => apiClient.put(`/categories/${id}`, data),
   deleteCategory: (id: string) => apiClient.delete(`/categories/${id}`),
 
+  // VIN Decode
+  decodeVin: (vin: string) => apiClient.post('/vin/decode', { vin }),
+
+  // Vehicle Models (NHTSA)
+  getVehicleModels: (brandName: string) =>
+    apiClient.get(`/vehicles/models/${encodeURIComponent(brandName)}`),
+
   // Brands
   getBrands: (params?: Record<string, any>) => apiClient.get('/brands', params),
   getBrand: (id: string) => apiClient.get(`/brands/${id}`),
