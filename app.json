@@ -19,7 +19,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.arkgarage.mobile",
       "infoPlist": {
-        "UIRequiresFullScreen": false
+        "UIRequiresFullScreen": false,
+        "NSFaceIDUsageDescription": "Usar Face ID para login rapido",
+        "NSCameraUsageDescription": "Tirar fotos de veiculos e pecas",
+        "NSPhotoLibraryUsageDescription": "Selecionar fotos de veiculos e pecas"
       }
     },
     "android": {
@@ -28,14 +31,34 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.arkgarage.mobile",
-      "usesCleartextTraffic": true
+      "usesCleartextTraffic": false
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#667eea"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Usar Face ID para login rapido"
+        }
+      ],
+      [
+        "@sentry/react-native",
+        {
+          "organization": "YOUR_SENTRY_ORG",
+          "project": "ark-garage-mobile"
+        }
+      ]
     ],
     "scheme": "arkgarage"
   }

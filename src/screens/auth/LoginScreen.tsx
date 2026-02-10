@@ -9,12 +9,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { InputItem, Button, Toast } from '@ant-design/react-native';
 import { router } from 'expo-router';
-import { useAuth } from '@/hooks';
+import { useAuth, useBiometrics } from '@/hooks';
 import { API_BASE_URL } from '@/utils/constants';
 import { spacing, heading, body, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
@@ -32,6 +33,15 @@ export default function LoginScreen() {
   const { login, isLoading } = useAuth();
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
+
+  const {
+    isBiometricAvailable,
+    isBiometricEnabled,
+    biometricType,
+    enableBiometrics,
+    authenticateWithBiometrics,
+  } = useBiometrics();
+  const [biometricLoading, setBiometricLoading] = useState(false);
 
   const [logo, setLogo] = useState<CompanyLogo | null>(null);
   const [logoLoading, setLogoLoading] = useState(true);
@@ -64,9 +74,46 @@ export default function LoginScreen() {
     const result = await login(email.trim(), password);
 
     if (result.success) {
+      // Offer biometric enrollment if available and not yet enabled
+      if (isBiometricAvailable && !isBiometricEnabled) {
+        Alert.alert(
+          biometricType || 'Biometria',
+          `Deseja ativar ${biometricType || 'login biometrico'} para acessos futuros?`,
+          [
+            { text: 'Agora nao', onPress: () => router.replace('/') },
+            {
+              text: 'Ativar',
+              onPress: async () => {
+                await enableBiometrics(email.trim(), password);
+                router.replace('/');
+              },
+            },
+          ],
+        );
+        return; // Don't navigate yet, wait for alert response
+      }
       router.replace('/');
     } else {
       Toast.fail(result.message || 'Falha no login');
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    try {
+      setBiometricLoading(true);
+      const credentials = await authenticateWithBiometrics();
+      if (credentials) {
+        const result = await login(credentials.email, credentials.password);
+        if (result.success) {
+          router.replace('/');
+        } else {
+          Toast.fail(result.message || 'Falha no login biometrico');
+        }
+      }
+    } catch (err) {
+      Toast.fail('Erro na autenticacao biometrica');
+    } finally {
+      setBiometricLoading(false);
     }
   };
 
@@ -148,6 +195,26 @@ export default function LoginScreen() {
                 >
                   {isLoading ? 'Verificando...' : 'Entrar'}
                 </Button>
+
+                {isBiometricAvailable && isBiometricEnabled && (
+                  <>
+                    <View style={styles.buttonSpacer} />
+                    <Pressable
+                      onPress={handleBiometricLogin}
+                      disabled={biometricLoading}
+                      style={styles.biometricButton}
+                    >
+                      <Text style={styles.biometricIcon}>
+                        {biometricType === 'Face ID' ? '👤' : '👆'}
+                      </Text>
+                      <Text style={styles.biometricText}>
+                        {biometricLoading
+                          ? 'Verificando...'
+                          : `Entrar com ${biometricType || 'Biometria'}`}
+                      </Text>
+                    </Pressable>
+                  </>
+                )}
 
                 <View style={styles.linkSpacer} />
 
@@ -261,5 +328,20 @@ const createStyles = (colors: Colors) => ({
     ...body.md,
     color: colors.accent,
     textAlign: 'center' as const,
+  },
+  biometricButton: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
+  },
+  biometricIcon: {
+    fontSize: 24,
+  },
+  biometricText: {
+    ...body.md,
+    color: colors.accent,
+    fontWeight: '600' as const,
   },
 });

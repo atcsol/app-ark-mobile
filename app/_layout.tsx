@@ -1,12 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { Provider } from '@ant-design/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import { ThemeProvider, useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/authStore';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { OfflineBanner } from '@/components/ui';
+import { AnimatedSplash } from '@/components/AnimatedSplash';
 import '../global.css';
+
+// Keep the native splash screen visible while we load
+SplashScreen.preventAutoHideAsync();
 
 function useProtectedRoute() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -27,8 +35,12 @@ function useProtectedRoute() {
 
 function AppContent() {
   const { antdTheme, isDark } = useTheme();
+  const { isConnected } = useNetworkStatus();
 
   useProtectedRoute();
+
+  // Initialize push notifications
+  usePushNotifications();
 
   return (
     <Provider theme={antdTheme}>
@@ -41,22 +53,37 @@ function AppContent() {
         <Stack.Screen name="(mechanic)" />
         <Stack.Screen name="(investor)" />
       </Stack>
+      <OfflineBanner isConnected={isConnected} />
     </Provider>
   );
 }
 
 export default function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
+  const isHydrated = useAuthStore((s) => s.isHydrated);
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
+
+  // Hide the native splash once hydrated
+  useEffect(() => {
+    if (isHydrated) {
+      SplashScreen.hideAsync();
+    }
+  }, [isHydrated]);
+
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false);
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
           <AppContent />
+          {showSplash && <AnimatedSplash onAnimationComplete={handleSplashComplete} />}
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
