@@ -89,7 +89,12 @@ export default function VehiclesScreen() {
     fetchVehicles(1, true);
   }, [fetchVehicles]);
 
-  useRefreshOnFocus(handleRefresh);
+  useRefreshOnFocus(
+    useCallback(() => {
+      setPage(1);
+      fetchVehicles(1, true);
+    }, [fetchVehicles]),
+  );
 
   const handleLoadMore = useCallback(() => {
     if (isLoadingMore.current || !hasMore) return;

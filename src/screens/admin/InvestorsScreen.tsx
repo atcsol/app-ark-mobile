@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { adminApi } from '@/services/adminApi';
-import { ScreenContainer } from '@/components/layout';
 import { SearchBar, RefreshableList, EmptyState, LoadingScreen, Avatar } from '@/components/ui';
 import { heading, body, caption, spacing, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
@@ -63,7 +62,7 @@ export default function InvestorsScreen() {
 
   useRefreshOnFocus(
     useCallback(() => {
-      fetchInvestors(1, true);
+      fetchInvestors(1);
     }, [fetchInvestors]),
   );
 
@@ -142,23 +141,21 @@ export default function InvestorsScreen() {
   );
 
   return (
-    <ScreenContainer scrollable={false} padded={false}>
-      <View style={styles.container}>
-        <RefreshableList
-          data={investors}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.uuid}
-          loading={loading}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          onEndReached={handleEndReached}
-          hasMore={hasMore}
-          ListHeaderComponent={listHeader}
-          emptyTitle="Nenhum investidor encontrado"
-          emptyDescription="Nao ha investidores cadastrados."
-          contentContainerStyle={styles.listContent}
-        />
-      </View>
+    <View style={styles.container}>
+      <RefreshableList
+        data={investors}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.uuid}
+        loading={loading}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        onEndReached={handleEndReached}
+        hasMore={hasMore}
+        ListHeaderComponent={listHeader}
+        emptyTitle="Nenhum investidor encontrado"
+        emptyDescription="Nao ha investidores cadastrados."
+        contentContainerStyle={styles.listContent}
+      />
       {can('investors.create') && (
         <TouchableOpacity
           style={styles.fab}
@@ -168,7 +165,7 @@ export default function InvestorsScreen() {
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       )}
-    </ScreenContainer>
+    </View>
   );
 }
 

@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { adminApi } from '@/services/adminApi';
-import { ScreenContainer } from '@/components/layout';
 import { SearchBar, RefreshableList, EmptyState, LoadingScreen, Avatar, StatusTag } from '@/components/ui';
 import { heading, body, caption, spacing, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
@@ -63,7 +62,7 @@ export default function MechanicsScreen() {
 
   useRefreshOnFocus(
     useCallback(() => {
-      fetchMechanics(1, true);
+      fetchMechanics(1);
     }, [fetchMechanics]),
   );
 
@@ -132,23 +131,21 @@ export default function MechanicsScreen() {
   );
 
   return (
-    <ScreenContainer scrollable={false} padded={false}>
-      <View style={styles.container}>
-        <RefreshableList
-          data={mechanics}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.uuid}
-          loading={loading}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          onEndReached={handleEndReached}
-          hasMore={hasMore}
-          ListHeaderComponent={listHeader}
-          emptyTitle="Nenhum mecanico encontrado"
-          emptyDescription="Nao ha mecanicos cadastrados."
-          contentContainerStyle={styles.listContent}
-        />
-      </View>
+    <View style={styles.container}>
+      <RefreshableList
+        data={mechanics}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.uuid}
+        loading={loading}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        onEndReached={handleEndReached}
+        hasMore={hasMore}
+        ListHeaderComponent={listHeader}
+        emptyTitle="Nenhum mecanico encontrado"
+        emptyDescription="Nao ha mecanicos cadastrados."
+        contentContainerStyle={styles.listContent}
+      />
       {can('mechanics.create') && (
         <TouchableOpacity
           style={styles.fab}
@@ -158,7 +155,7 @@ export default function MechanicsScreen() {
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       )}
-    </ScreenContainer>
+    </View>
   );
 }
 
