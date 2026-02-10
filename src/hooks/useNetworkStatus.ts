@@ -6,7 +6,12 @@ export function useNetworkStatus() {
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
-      setIsConnected(state.isConnected ?? true);
+      // Only mark as disconnected when both checks explicitly say false
+      // This avoids false negatives on simulators and initial null states
+      const connected = state.isConnected === false && state.isInternetReachable === false
+        ? false
+        : true;
+      setIsConnected(connected);
     });
     return () => unsubscribe();
   }, []);
