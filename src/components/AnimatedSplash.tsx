@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleSheet, Dimensions, Image } from 'react-native';
+import { View, Animated, StyleSheet, Dimensions, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
@@ -11,8 +11,6 @@ interface AnimatedSplashProps {
 export function AnimatedSplash({ onAnimationComplete }: AnimatedSplashProps) {
   const logoScale = useRef(new Animated.Value(0.3)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
-  const textOpacity = useRef(new Animated.Value(0)).current;
-  const subtitleOpacity = useRef(new Animated.Value(0)).current;
   const fadeOut = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -21,7 +19,7 @@ export function AnimatedSplash({ onAnimationComplete }: AnimatedSplashProps) {
       Animated.parallel([
         Animated.timing(logoOpacity, {
           toValue: 1,
-          duration: 600,
+          duration: 800,
           useNativeDriver: true,
         }),
         Animated.spring(logoScale, {
@@ -31,20 +29,8 @@ export function AnimatedSplash({ onAnimationComplete }: AnimatedSplashProps) {
           useNativeDriver: true,
         }),
       ]),
-      // Title fades in
-      Animated.timing(textOpacity, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      // Subtitle fades in
-      Animated.timing(subtitleOpacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
       // Hold for a moment
-      Animated.delay(500),
+      Animated.delay(800),
       // Everything fades out
       Animated.timing(fadeOut, {
         toValue: 0,
@@ -54,7 +40,7 @@ export function AnimatedSplash({ onAnimationComplete }: AnimatedSplashProps) {
     ]).start(() => {
       onAnimationComplete();
     });
-  }, [logoScale, logoOpacity, textOpacity, subtitleOpacity, fadeOut, onAnimationComplete]);
+  }, [logoScale, logoOpacity, fadeOut, onAnimationComplete]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeOut }]}>
@@ -80,14 +66,6 @@ export function AnimatedSplash({ onAnimationComplete }: AnimatedSplashProps) {
               resizeMode="contain"
             />
           </Animated.View>
-
-          <Animated.Text style={[styles.title, { opacity: textOpacity }]}>
-            ARK Garage
-          </Animated.Text>
-
-          <Animated.Text style={[styles.subtitle, { opacity: subtitleOpacity }]}>
-            Auto Sales
-          </Animated.Text>
         </View>
       </LinearGradient>
     </Animated.View>
@@ -106,30 +84,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 32,
   },
   logoContainer: {
-    width: width * 0.4,
-    height: width * 0.4,
-    maxWidth: 180,
-    maxHeight: 180,
-    marginBottom: 24,
+    width: width * 0.75,
+    maxWidth: 320,
+    aspectRatio: 1.3,
   },
   logo: {
     width: '100%',
     height: '100%',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#ffffff',
-    letterSpacing: 2,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginTop: 8,
-    letterSpacing: 4,
-    textTransform: 'uppercase',
   },
 });
