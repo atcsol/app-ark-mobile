@@ -8,6 +8,9 @@ interface OfflineBannerProps {
 export function OfflineBanner({ isConnected }: OfflineBannerProps) {
   const [showOverlay, setShowOverlay] = useState(false);
   const opacity = useRef(new Animated.Value(0)).current;
+  const pulseScale = useRef(new Animated.Value(1)).current;
+  const pulseOpacity = useRef(new Animated.Value(1)).current;
+  const pulseAnim = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
     if (!isConnected) {
@@ -17,14 +20,46 @@ export function OfflineBanner({ isConnected }: OfflineBannerProps) {
         duration: 300,
         useNativeDriver: true,
       }).start();
+
+      // Start pulse animation
+      pulseAnim.current = Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(pulseScale, {
+              toValue: 2.5,
+              duration: 1200,
+              useNativeDriver: true,
+            }),
+            Animated.timing(pulseOpacity, {
+              toValue: 0,
+              duration: 1200,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.parallel([
+            Animated.timing(pulseScale, {
+              toValue: 1,
+              duration: 0,
+              useNativeDriver: true,
+            }),
+            Animated.timing(pulseOpacity, {
+              toValue: 1,
+              duration: 0,
+              useNativeDriver: true,
+            }),
+          ]),
+        ]),
+      );
+      pulseAnim.current.start();
     } else if (showOverlay) {
+      pulseAnim.current?.stop();
       Animated.timing(opacity, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }).start(() => setShowOverlay(false));
     }
-  }, [isConnected, opacity, showOverlay]);
+  }, [isConnected, opacity, pulseScale, pulseOpacity, showOverlay]);
 
   if (!showOverlay) return null;
 
@@ -36,8 +71,17 @@ export function OfflineBanner({ isConnected }: OfflineBannerProps) {
         <Text style={styles.subtitle}>
           Verifique sua conexao com a internet e tente novamente
         </Text>
-        <View style={styles.dot}>
-          <Animated.View style={[styles.pulse]} />
+        <View style={styles.pulseContainer}>
+          <Animated.View
+            style={[
+              styles.pulseRing,
+              {
+                transform: [{ scale: pulseScale }],
+                opacity: pulseOpacity,
+              },
+            ]}
+          />
+          <View style={styles.dot} />
         </View>
         <Text style={styles.hint}>Reconectando automaticamente...</Text>
       </View>
@@ -82,12 +126,25 @@ const styles = StyleSheet.create({
   icon: {
     fontSize: 56,
   },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#e74c3c',
+  pulseContainer: {
     marginTop: 24,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pulseRing: {
+    position: 'absolute',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#e74c3c',
+  },
+  dot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#e74c3c',
   },
   hint: {
     fontSize: 13,
