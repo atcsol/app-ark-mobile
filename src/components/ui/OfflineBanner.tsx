@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleSheet } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Text, Animated, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface OfflineBannerProps {
@@ -7,16 +7,28 @@ interface OfflineBannerProps {
 }
 
 export function OfflineBanner({ isConnected }: OfflineBannerProps) {
-  const translateY = useRef(new Animated.Value(-60)).current;
+  const [showBanner, setShowBanner] = useState(false);
+  const translateY = useRef(new Animated.Value(-100)).current;
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    Animated.timing(translateY, {
-      toValue: isConnected ? -60 : 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  }, [isConnected, translateY]);
+    if (!isConnected) {
+      setShowBanner(true);
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else if (showBanner) {
+      Animated.timing(translateY, {
+        toValue: -100,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setShowBanner(false));
+    }
+  }, [isConnected, translateY, showBanner]);
+
+  if (!showBanner) return null;
 
   return (
     <Animated.View
@@ -24,7 +36,6 @@ export function OfflineBanner({ isConnected }: OfflineBannerProps) {
         styles.container,
         { transform: [{ translateY }], paddingTop: insets.top },
       ]}
-      pointerEvents={isConnected ? 'none' : 'auto'}
     >
       <Text style={styles.text}>Sem conexao com a internet</Text>
     </Animated.View>
