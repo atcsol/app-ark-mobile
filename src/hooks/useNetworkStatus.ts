@@ -1,31 +1,50 @@
 import { useState, useEffect, useRef } from 'react';
-import NetInfo from '@react-native-community/netinfo';
+import { AppState } from 'react-native';
+import { API_BASE_URL } from '@/utils/constants';
 
 export function useNetworkStatus() {
   const [isConnected, setIsConnected] = useState(true);
-  const hasBeenConnected = useRef(false);
-  const startTime = useRef(Date.now());
+  const checking = useRef(false);
 
   useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      // Ignore all events in the first 10 seconds to avoid false positives
-      if (Date.now() - startTime.current < 10000) {
-        if (state.isConnected === true) {
-          hasBeenConnected.current = true;
-        }
-        return;
-      }
-
-      if (state.isConnected === true) {
-        hasBeenConnected.current = true;
+    async function checkConnection() {
+      if (checking.current) return;
+      checking.current = true;
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const response = await fetch(`${API_BASE_URL}/health`, {
+          method: 'HEAD',
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
         setIsConnected(true);
-      } else if (hasBeenConnected.current && state.isConnected === false) {
-        // Only show offline if we previously had a confirmed connection
+      } catch {
+        // Only mark offline if we get a network error, not HTTP errors
         setIsConnected(false);
+      } finally {
+        checking.current = false;
+      }
+    }
+
+    // Check on mount (with delay to avoid false positive)
+    const initialDelay = setTimeout(checkConnection, 5000);
+
+    // Check every 10 seconds
+    const interval = setInterval(checkConnection, 10000);
+
+    // Check when app comes to foreground
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        checkConnection();
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(initialDelay);
+      clearInterval(interval);
+      subscription.remove();
+    };
   }, []);
 
   return { isConnected };
