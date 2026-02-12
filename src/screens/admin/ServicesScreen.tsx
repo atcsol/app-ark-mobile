@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { WhiteSpace } from '@ant-design/react-native';
+import { IconOutline } from '@ant-design/icons-react-native';
 import { adminApi } from '@/services/adminApi';
 import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { SearchBar, LoadingScreen, EmptyState, RefreshableList, ConfirmModal, FilterChips } from '@/components/ui';
@@ -17,6 +18,7 @@ interface ServiceCategory {
   id: string;
   name: string;
   color?: string;
+  icon?: string;
 }
 
 interface ServiceCatalog {
@@ -172,7 +174,10 @@ export default function ServicesScreen() {
             {item.name}
           </Text>
           {item.category?.name ? (
-            <View style={[styles.categoryTag, { backgroundColor: catColor.bg }]}>
+            <View style={[styles.categoryTag, { backgroundColor: catColor.bg, flexDirection: 'row', alignItems: 'center' }]}>
+              {item.category?.icon ? (
+                <IconOutline name={item.category.icon as any} size={12} color={catColor.text} style={{ marginRight: 3 }} />
+              ) : null}
               <Text style={[styles.categoryText, { color: catColor.text }]}>
                 {item.category.name}
               </Text>

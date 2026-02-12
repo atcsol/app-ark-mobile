@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Alert, StyleSheet, ActivityIndicator } from 'react-native';
 import { adminApi } from '@/services/adminApi';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { FormInput, FormCurrency } from '@/components/forms';
 import { usePermissions } from '@/hooks';
 import { useTheme } from '@/theme/ThemeContext';
@@ -18,6 +19,7 @@ export function VehicleAddServiceSection({ vehicleId, onRefresh }: Props) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const { can } = usePermissions();
+  const { handleError } = useErrorHandler();
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -88,10 +90,8 @@ export function VehicleAddServiceSection({ vehicleId, onRefresh }: Props) {
       resetForm();
       setExpanded(false);
       onRefresh();
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || err.message || 'Erro ao adicionar servico';
-      Alert.alert('Erro', message);
+    } catch (error) {
+      handleError(error, 'addVehicleService');
     } finally {
       setSaving(false);
     }
@@ -185,8 +185,8 @@ export function VehicleAddServiceSection({ vehicleId, onRefresh }: Props) {
                     >
                       {mech.name}
                     </Text>
-                    {mech.specialty && (
-                      <Text style={styles.optionChipSub}>{mech.specialty}</Text>
+                    {mech.specialties && mech.specialties.length > 0 && (
+                      <Text style={styles.optionChipSub}>{mech.specialties.join(', ')}</Text>
                     )}
                   </TouchableOpacity>
                 ))}

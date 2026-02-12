@@ -13,6 +13,7 @@ export default function ServicesLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="[uuid]" options={{ title: 'Detalhes do Serviço', headerBackTitle: 'Voltar' }} />
     </Stack>
   );
 }

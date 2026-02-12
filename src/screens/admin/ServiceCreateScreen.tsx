@@ -3,6 +3,7 @@ import { View, Text, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@ant-design/react-native';
 import { adminApi } from '@/services/adminApi';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { ScreenContainer } from '@/components/layout';
 import { FormInput } from '@/components/forms/FormInput';
 import { FormCurrency } from '@/components/forms/FormCurrency';
@@ -16,24 +17,25 @@ interface ServiceForm {
   name: string;
   description: string;
   category_id: string;
-  base_price: number;
+  default_price: number;
 }
 
 interface FormErrors {
   name?: string;
   category_id?: string;
-  base_price?: string;
+  default_price?: string;
 }
 
 const EMPTY_FORM: ServiceForm = {
   name: '',
   description: '',
   category_id: '',
-  base_price: 0,
+  default_price: 0,
 };
 
 export default function ServiceCreateScreen() {
   const router = useRouter();
+  const { handleError } = useErrorHandler();
   const styles = useThemeStyles(createStyles);
 
   const [categoryOptions, setCategoryOptions] = useState<SelectOption[]>([]);
@@ -47,7 +49,7 @@ export default function ServiceCreateScreen() {
         const res = await adminApi.getCategories({ active: true, per_page: 100 });
         const cats = res.data || res;
         setCategoryOptions(
-          cats.map((c: any) => ({ label: c.name, value: c.id }))
+          cats.map((c: any) => ({ label: c.name, value: c.id, icon: c.icon || undefined, color: c.color_hex || undefined }))
             .sort((a: any, b: any) => a.label.localeCompare(b.label))
         );
       } catch {}
@@ -67,7 +69,7 @@ export default function ServiceCreateScreen() {
   const validate = useCallback((): boolean => {
     const newErrors: FormErrors = {};
     if (!form.name.trim()) newErrors.name = 'Nome e obrigatorio';
-    if (!form.base_price || form.base_price <= 0) newErrors.base_price = 'Preco base e obrigatorio';
+    if (!form.default_price || form.default_price <= 0) newErrors.default_price = 'Preco base e obrigatorio';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [form]);
@@ -79,7 +81,7 @@ export default function ServiceCreateScreen() {
       setSubmitting(true);
       const data: Record<string, any> = {
         name: form.name.trim(),
-        base_price: form.base_price,
+        default_price: form.default_price,
       };
       if (form.description.trim()) data.description = form.description.trim();
       if (form.category_id) data.category_id = form.category_id;
@@ -88,9 +90,8 @@ export default function ServiceCreateScreen() {
       Alert.alert('Sucesso', 'Servico cadastrado com sucesso.', [
         { text: 'OK', onPress: () => router.back() },
       ]);
-    } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Erro ao cadastrar servico';
-      Alert.alert('Erro', message);
+    } catch (error) {
+      handleError(error, 'createService');
     } finally {
       setSubmitting(false);
     }
@@ -133,9 +134,9 @@ export default function ServiceCreateScreen() {
         <FormCurrency
           label="Preco Base"
           required
-          value={form.base_price}
-          onChangeValue={(value) => updateField('base_price', value)}
-          error={errors.base_price}
+          value={form.default_price}
+          onChangeValue={(value) => updateField('default_price', value)}
+          error={errors.default_price}
         />
 
         <Button

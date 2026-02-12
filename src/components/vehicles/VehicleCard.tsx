@@ -35,7 +35,7 @@ export function VehicleCard({ vehicle, onPress }: Props) {
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <Text style={styles.title} numberOfLines={1}>
-              {vehicle.brand} {vehicle.model} {vehicle.year}
+              {vehicle.brand_name || vehicle.brand?.name || ''} {vehicle.model} {vehicle.year}
             </Text>
             <VehicleStatusBadge status={vehicle.status} small />
           </View>

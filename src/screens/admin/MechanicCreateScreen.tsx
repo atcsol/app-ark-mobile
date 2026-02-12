@@ -9,21 +9,7 @@ import { spacing, heading, body, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
-
-const SPECIALTY_OPTIONS = [
-  { label: 'Mecanica Geral', value: 'Mecanica Geral' },
-  { label: 'Motor', value: 'Motor' },
-  { label: 'Transmissao', value: 'Transmissao' },
-  { label: 'Suspensao', value: 'Suspensao' },
-  { label: 'Freios', value: 'Freios' },
-  { label: 'Sistema Eletrico', value: 'Sistema Eletrico' },
-  { label: 'Ar Condicionado', value: 'Ar Condicionado' },
-  { label: 'Funilaria', value: 'Funilaria' },
-  { label: 'Pintura', value: 'Pintura' },
-  { label: 'Diagnostico Eletronico', value: 'Diagnostico Eletronico' },
-  { label: 'Injecao Eletronica', value: 'Injecao Eletronica' },
-  { label: 'Alinhamento e Balanceamento', value: 'Alinhamento e Balanceamento' },
-];
+import { SPECIALTY_OPTIONS } from '@/constants';
 
 const STATUS_OPTIONS = [
   { label: 'Ativo', value: 'active' },

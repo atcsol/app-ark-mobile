@@ -86,7 +86,7 @@ export default function InvestorVehicleDetailScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Informacoes do Veiculo</Text>
         <View style={styles.card}>
-          <InfoRow label="Marca" value={vehicle.brand} styles={styles} />
+          <InfoRow label="Marca" value={vehicle.brand_name || vehicle.brand?.name} styles={styles} />
           <InfoRow label="Modelo" value={vehicle.model} styles={styles} />
           <InfoRow label="Ano" value={String(vehicle.year)} styles={styles} />
           <InfoRow label="VIN" value={vehicle.vin_number} styles={styles} />

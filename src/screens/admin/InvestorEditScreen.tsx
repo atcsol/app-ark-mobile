@@ -16,9 +16,9 @@ interface InvestorForm {
   name: string;
   email: string;
   phone: string;
-  ssn: string;
+  document: string;
   street: string;
-  apt: string;
+  apartment: string;
   city: string;
   state: string;
   zip: string;
@@ -43,9 +43,9 @@ export default function InvestorEditScreen() {
     name: '',
     email: '',
     phone: '',
-    ssn: '',
+    document: '',
     street: '',
-    apt: '',
+    apartment: '',
     city: '',
     state: '',
     zip: '',
@@ -65,9 +65,9 @@ export default function InvestorEditScreen() {
         name: inv.name || '',
         email: inv.email || '',
         phone: inv.phone || '',
-        ssn: inv.ssn || inv.cpf_cnpj || '',
+        document: inv.document || '',
         street: address.street || '',
-        apt: address.apt || '',
+        apartment: address.apartment || '',
         city: address.city || '',
         state: address.state || '',
         zip: address.zip || '',
@@ -124,11 +124,11 @@ export default function InvestorEditScreen() {
       };
 
       if (form.phone?.trim()) data.phone = form.phone.trim();
-      if (form.ssn?.trim()) data.ssn = form.ssn.trim();
+      if (form.document?.trim()) data.document = form.document.trim();
 
       const address: Record<string, string> = {};
       if (form.street?.trim()) address.street = form.street.trim();
-      if (form.apt?.trim()) address.apt = form.apt.trim();
+      if (form.apartment?.trim()) address.apartment = form.apartment.trim();
       if (form.city?.trim()) address.city = form.city.trim();
       if (form.state?.trim()) address.state = form.state.trim();
       if (form.zip?.trim()) address.zip = form.zip.trim();
@@ -209,8 +209,8 @@ export default function InvestorEditScreen() {
 
         <FormInput
           label="SSN"
-          value={form.ssn}
-          onChangeText={(text) => updateField('ssn', text)}
+          value={form.document}
+          onChangeText={(text) => updateField('document', text)}
           placeholder="000-00-0000"
         />
 
@@ -225,8 +225,8 @@ export default function InvestorEditScreen() {
 
         <FormInput
           label="Complemento"
-          value={form.apt}
-          onChangeText={(text) => updateField('apt', text)}
+          value={form.apartment}
+          onChangeText={(text) => updateField('apartment', text)}
           placeholder="Apt, Suite, etc."
         />
 

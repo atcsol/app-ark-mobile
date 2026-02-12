@@ -66,7 +66,7 @@ export default function PartEditScreen() {
         ]);
         const cats = catRes.data || catRes;
         setCategoryOptions(
-          cats.map((c: any) => ({ label: c.name, value: c.id }))
+          cats.map((c: any) => ({ label: c.name, value: c.id, icon: c.icon || undefined, color: c.color_hex || undefined }))
             .sort((a: any, b: any) => a.label.localeCompare(b.label))
         );
         const brands = brandRes.data || brandRes;

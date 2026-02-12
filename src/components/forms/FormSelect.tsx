@@ -11,6 +11,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
+import { IconOutline } from '@ant-design/icons-react-native';
 import { spacing, body, caption, borderRadius } from '@/theme';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
@@ -73,6 +74,15 @@ export function FormSelect({
         onPress={() => handleSelect(String(item.value))}
         activeOpacity={0.6}
       >
+        {item.icon ? (
+          <View style={styles.optionIcon}>
+            <IconOutline
+              name={item.icon as any}
+              size={18}
+              color={item.color || (isSelected ? styles.optionTextSelected.color : styles.optionText.color)}
+            />
+          </View>
+        ) : null}
         <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
           {item.label}
         </Text>
@@ -96,11 +106,20 @@ export function FormSelect({
         onPress={() => !disabled && setVisible(true)}
         activeOpacity={0.7}
       >
+        {selectedOption?.icon ? (
+          <View style={styles.triggerIcon}>
+            <IconOutline
+              name={selectedOption.icon as any}
+              size={16}
+              color={selectedOption.color || styles.triggerText.color}
+            />
+          </View>
+        ) : null}
         <Text
-          style={[styles.triggerText, !selectedOption && styles.placeholder]}
+          style={[styles.triggerText, !selectedOption && !value && styles.placeholder]}
           numberOfLines={1}
         >
-          {selectedOption?.label || placeholder}
+          {selectedOption?.label || (value ? String(value) : placeholder)}
         </Text>
         <Text style={styles.chevron}>▼</Text>
       </TouchableOpacity>
@@ -194,6 +213,9 @@ const createStyles = (colors: Colors) => ({
   triggerDisabled: {
     backgroundColor: colors.gray100,
   },
+  triggerIcon: {
+    marginRight: spacing.sm,
+  },
   triggerText: {
     ...body.md,
     color: colors.textPrimary,
@@ -284,6 +306,11 @@ const createStyles = (colors: Colors) => ({
   },
   optionSelected: {
     backgroundColor: colors.accent + '10',
+  },
+  optionIcon: {
+    marginRight: spacing.sm,
+    width: 22,
+    alignItems: 'center' as const,
   },
   optionText: {
     ...body.md,

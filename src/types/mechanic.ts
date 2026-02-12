@@ -13,7 +13,7 @@ export interface Mechanic {
   name: string;
   email: string;
   phone?: string;
-  specialty?: string;
+  specialties?: string[];
   hourly_rate?: number;
 }
 

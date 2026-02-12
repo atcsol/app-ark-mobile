@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { WhiteSpace } from '@ant-design/react-native';
 import { useRouter } from 'expo-router';
 import { adminApi } from '@/services/adminApi';
@@ -10,6 +10,7 @@ import { heading, body, caption, spacing, borderRadius } from '@/theme';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
 import { usePermissions, useAdaptiveLayout } from '@/hooks';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import type { Brand } from '@/types';
 
 const TYPE_FILTERS: FilterOption[] = [
@@ -39,6 +40,7 @@ function getTypeColor(type?: string) {
 export default function BrandsScreen() {
   const styles = useThemeStyles(createStyles);
   const { can } = usePermissions();
+  const { handleError } = useErrorHandler();
   const { listContentStyle } = useAdaptiveLayout();
   const router = useRouter();
 
@@ -61,9 +63,9 @@ export default function BrandsScreen() {
       if (typeFilter !== 'all') params.type = typeFilter;
       const data = await adminApi.getBrands(params);
       setBrands(data.data || data);
-    } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Erro ao carregar marcas';
-      setError(message);
+    } catch (error) {
+      const apiError = handleError(error, 'fetchBrands', { silent: true });
+      setError(apiError.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -103,9 +105,8 @@ export default function BrandsScreen() {
       await adminApi.deleteBrand(deleteTarget.id);
       setDeleteTarget(null);
       fetchBrands();
-    } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Erro ao excluir marca';
-      Alert.alert('Erro', message);
+    } catch (error) {
+      handleError(error, 'deleteBrand');
     } finally {
       setDeleting(false);
     }

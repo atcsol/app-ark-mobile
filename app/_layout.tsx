@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Font from 'expo-font';
 import { ThemeProvider, useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -62,17 +63,25 @@ export default function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
   const isHydrated = useAuthStore((s) => s.isHydrated);
   const [showSplash, setShowSplash] = useState(true);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
 
-  // Hide the native splash once hydrated
+  // Load icon fonts
   useEffect(() => {
-    if (isHydrated) {
+    Font.loadAsync({
+      antoutline: require('@ant-design/icons-react-native/fonts/antoutline.ttf'),
+    }).then(() => setFontsLoaded(true)).catch(() => setFontsLoaded(true));
+  }, []);
+
+  // Hide the native splash once hydrated and fonts loaded
+  useEffect(() => {
+    if (isHydrated && fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [isHydrated]);
+  }, [isHydrated, fontsLoaded]);
 
   const handleSplashComplete = useCallback(() => {
     setShowSplash(false);

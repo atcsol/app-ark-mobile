@@ -62,11 +62,36 @@ const TYPE_ICONS: Record<ApprovalType, string> = {
 };
 
 function getApprovalDescription(approval: Approval): string {
-  const item = approval.item;
-  if (item.name) return String(item.name);
-  if (item.description) return String(item.description);
-  if (item.solicitation_number) return `Solicitacao #${item.solicitation_number}`;
-  return `Item #${approval.id}`;
+  const item = approval.item as any;
+  switch (approval.type) {
+    case 'services':
+      return `${item.service?.name || 'Servico'} - ${item.vehicle?.full_name || item.vehicle?.model || ''}`;
+    case 'parts':
+      return `${item.part?.name || 'Peca'} (x${item.quantity || 1})`;
+    case 'sales':
+      return `${item.vehicle?.full_name || item.vehicle?.model || 'Veiculo'} - ${item.buyer_name || ''}`;
+    default:
+      return `Item #${approval.id}`;
+  }
+}
+
+function normalizeApproval(raw: any, type: ApprovalType): Approval {
+  const mechanic = type === 'services' ? raw.mechanic : raw.vehicle_service?.mechanic;
+  const requestedBy = type === 'sales'
+    ? { id: raw.seller?.id, name: raw.seller?.name || 'Vendedor' }
+    : { id: mechanic?.id, name: mechanic?.name || 'Mecanico' };
+
+  return {
+    id: raw.id,
+    uuid: raw.uuid,
+    type,
+    item: raw,
+    status: raw.approval_status === 'pending_approval' ? 'pending' : raw.approval_status,
+    requested_by: requestedBy,
+    approved_by: raw.approved_by || null,
+    rejection_reason: raw.rejection_reason || null,
+    created_at: raw.created_at,
+  };
 }
 
 export default function ApprovalsScreen() {
@@ -99,7 +124,12 @@ export default function ApprovalsScreen() {
   const fetchStats = useCallback(async () => {
     try {
       const data = await adminApi.getApprovalStats();
-      setStats(data.data || data);
+      setStats({
+        pending_services: data?.services ?? 0,
+        pending_parts: data?.parts ?? 0,
+        pending_sales: data?.sales ?? 0,
+        total_pending: data?.total ?? 0,
+      });
     } catch {
       // Stats are optional, don't block the UI
     }
@@ -114,7 +144,12 @@ export default function ApprovalsScreen() {
       } else {
         data = await adminApi.getApprovalsHistory({ status: statusFilter, type: activeTab });
       }
-      setApprovals(data.data || data);
+      // Extract the array for the active tab and normalize
+      const rawItems = data?.[activeTab] ?? [];
+      const normalized = Array.isArray(rawItems)
+        ? rawItems.map((item: any) => normalizeApproval(item, activeTab))
+        : [];
+      setApprovals(normalized);
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || 'Erro ao carregar aprovacoes';
       setError(message);

@@ -115,7 +115,7 @@ export default function VehicleDetailScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Informacoes Basicas</Text>
         <View style={styles.card}>
-          <InfoRow label="Marca" value={vehicle.brand} />
+          <InfoRow label="Marca" value={vehicle.brand_name || vehicle.brand?.name} />
           <InfoRow label="Modelo" value={vehicle.model} />
           <InfoRow label="Ano" value={String(vehicle.year)} />
           <InfoRow label="VIN" value={vehicle.vin_number} />

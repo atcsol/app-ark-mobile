@@ -39,7 +39,7 @@ export function VehicleTimelineSection({ vehicle }: Props) {
       items.push({
         date: vehicle.created_at,
         title: 'Veiculo cadastrado',
-        description: `${vehicle.brand} ${vehicle.model} ${vehicle.year}`,
+        description: `${vehicle.brand_name || vehicle.brand?.name || ''} ${vehicle.model} ${vehicle.year}`,
         color: EVENT_COLORS.created,
         icon: '+',
       });

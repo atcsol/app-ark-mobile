@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { WhiteSpace } from '@ant-design/react-native';
+import { IconOutline } from '@ant-design/icons-react-native';
 import { adminApi } from '@/services/adminApi';
 import { SearchBar, RefreshableList, LoadingScreen, EmptyState, FilterChips, ToggleFilter } from '@/components/ui';
 import { ScreenContainer, ScreenHeader } from '@/components/layout';
@@ -17,6 +18,7 @@ interface PartCategory {
   id: string;
   name: string;
   color?: string;
+  icon?: string;
 }
 
 interface PartBrand {
@@ -182,9 +184,15 @@ export default function PartsScreen() {
             </Text>
           ) : null}
           {item.category?.name ? (
-            <Text style={styles.metaText}>
-              {item.brand?.name ? ' | ' : ''}{item.category.name}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={styles.metaText}>
+                {item.brand?.name ? ' | ' : ''}
+              </Text>
+              {item.category?.icon ? (
+                <IconOutline name={item.category.icon as any} size={12} color={styles.metaText.color} style={{ marginRight: 3 }} />
+              ) : null}
+              <Text style={styles.metaText}>{item.category.name}</Text>
+            </View>
           ) : null}
         </View>
 

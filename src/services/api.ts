@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/stores/authStore';
 import { API_BASE_URL } from '@/utils/constants';
+import { captureError } from '@/utils/sentry';
 
 class ApiClient {
   private api: AxiosInstance;
@@ -50,7 +51,17 @@ class ApiClient {
             error_type: data?.error,
           });
         }
-        if (error.response?.status === 401) {
+        // Log erros 5xx no Sentry
+        if (error.response?.status && error.response.status >= 500) {
+          captureError(new Error(`API ${error.response.status}: ${error.config?.url}`), {
+            status: error.response.status,
+            data: error.response.data,
+            method: error.config?.method,
+            url: error.config?.url,
+          });
+        }
+
+        if (error.response?.status === 401 && !error.config?.url?.includes('/login')) {
           await useAuthStore.getState().logout();
         }
         return Promise.reject(error);
@@ -68,7 +79,7 @@ class ApiClient {
       const data = response.data;
       console.log('[API] Login response:', {
         success: data.success,
-        user_type: data.user_type,
+        user_type: data.data?.user_type,
         has_token: !!data.data?.access_token || !!data.data?.token,
         user_email: data.data?.user?.email || data.data?.seller?.email || data.data?.mechanic?.email || data.data?.investor?.email,
         user_roles: data.data?.user?.roles?.map((r: any) => r.name),
@@ -129,13 +140,25 @@ class ApiClient {
   private unwrap(body: any): any {
     // Unwrap Laravel's { success, data, meta? } pattern
     if (body && typeof body === 'object' && 'data' in body && 'success' in body) {
-      const data = this.addUuidAlias(body.data);
-      // Paginated response: keep { data, meta } structure
+      // Paginated response with meta at top level
       if ('meta' in body) {
-        return { data, meta: body.meta };
+        return { data: this.addUuidAlias(body.data), meta: body.meta };
+      }
+      // Paginated response wrapped inside data (e.g. $this->success($query->paginate()))
+      const inner = body.data;
+      if (inner && typeof inner === 'object' && 'data' in inner && 'current_page' in inner) {
+        return {
+          data: this.addUuidAlias(inner.data),
+          meta: {
+            current_page: inner.current_page,
+            last_page: inner.last_page,
+            per_page: inner.per_page,
+            total: inner.total,
+          },
+        };
       }
       // Simple response: return inner data directly
-      return data;
+      return this.addUuidAlias(inner);
     }
     // Laravel paginated response without success wrapper (e.g. users)
     if (body && typeof body === 'object' && 'data' in body && 'current_page' in body) {

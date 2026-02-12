@@ -16,9 +16,9 @@ interface SellerForm {
   name: string;
   email: string;
   phone: string;
-  ssn: string;
+  document: string;
   street: string;
-  apt: string;
+  apartment: string;
   city: string;
   state: string;
   zip: string;
@@ -52,9 +52,9 @@ export default function SellerEditScreen() {
     name: '',
     email: '',
     phone: '',
-    ssn: '',
+    document: '',
     street: '',
-    apt: '',
+    apartment: '',
     city: '',
     state: '',
     zip: '',
@@ -77,15 +77,15 @@ export default function SellerEditScreen() {
         name: s.name || '',
         email: s.email || '',
         phone: s.phone || '',
-        ssn: s.ssn || s.cpf_cnpj || '',
+        document: s.document || '',
         street: address.street || '',
-        apt: address.apt || '',
+        apartment: address.apartment || '',
         city: address.city || '',
         state: address.state || '',
         zip: address.zip || '',
         commission_percentage: s.commission_percentage != null ? String(s.commission_percentage) : '',
         status: s.status || 'active',
-        notes: s.notes || '',
+        notes: s.notes || s.observations || '',
       });
     } catch (err: any) {
       const message =
@@ -145,16 +145,16 @@ export default function SellerEditScreen() {
       };
 
       if (form.phone?.trim()) data.phone = form.phone.trim();
-      if (form.ssn?.trim()) data.ssn = form.ssn.trim();
+      if (form.document?.trim()) data.document = form.document.trim();
       if (form.commission_percentage.trim()) {
         data.commission_percentage = parseFloat(form.commission_percentage);
       }
       if (form.status) data.status = form.status;
-      if (form.notes?.trim()) data.notes = form.notes.trim();
+      if (form.notes?.trim()) data.observations = form.notes.trim();
 
       const address: Record<string, string> = {};
       if (form.street?.trim()) address.street = form.street.trim();
-      if (form.apt?.trim()) address.apt = form.apt.trim();
+      if (form.apartment?.trim()) address.apartment = form.apartment.trim();
       if (form.city?.trim()) address.city = form.city.trim();
       if (form.state?.trim()) address.state = form.state.trim();
       if (form.zip?.trim()) address.zip = form.zip.trim();
@@ -235,8 +235,8 @@ export default function SellerEditScreen() {
 
         <FormInput
           label="SSN"
-          value={form.ssn}
-          onChangeText={(text) => updateField('ssn', text)}
+          value={form.document}
+          onChangeText={(text) => updateField('document', text)}
           placeholder="000-00-0000"
         />
 
@@ -267,8 +267,8 @@ export default function SellerEditScreen() {
 
         <FormInput
           label="Complemento"
-          value={form.apt}
-          onChangeText={(text) => updateField('apt', text)}
+          value={form.apartment}
+          onChangeText={(text) => updateField('apartment', text)}
           placeholder="Apt, Suite, etc."
         />
 

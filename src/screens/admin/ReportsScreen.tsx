@@ -86,8 +86,15 @@ export default function ReportsScreen() {
           break;
       }
 
-      const data = response?.data ?? response ?? [];
-      setResults(Array.isArray(data) ? data : []);
+      let items: any[];
+      switch (reportType) {
+        case 'vehicles': items = response?.vehicles ?? []; break;
+        case 'sales': items = response?.sales ?? []; break;
+        case 'investors': items = response?.investors ?? []; break;
+        case 'parts': items = response?.parts ?? []; break;
+        default: items = [];
+      }
+      setResults(Array.isArray(items) ? items : []);
     } catch (err: any) {
       const message =
         err.response?.data?.message || err.message || 'Erro ao gerar relatorio';
@@ -100,7 +107,7 @@ export default function ReportsScreen() {
   const renderVehicleItem = useCallback((item: any, index: number) => (
     <View key={index} style={styles.card}>
       <Text style={styles.cardTitle} numberOfLines={1}>
-        {item.name || item.vehicle_name || `Veiculo #${index + 1}`}
+        {item.full_name || `${item.brand_name || ''} ${item.model || ''} ${item.year || ''}`.trim() || `Veiculo #${index + 1}`}
       </Text>
       {item.status && (
         <View style={styles.cardRow}>
@@ -117,7 +124,7 @@ export default function ReportsScreen() {
       <View style={styles.cardRow}>
         <Text style={styles.cardLabel}>Custos</Text>
         <Text style={[styles.cardValue, { color: colors.warning }]}>
-          {formatCurrency(item.costs ?? 0)}
+          {formatCurrency(item.total_cost ?? item.costs ?? 0)}
         </Text>
       </View>
       <View style={styles.cardRow}>
@@ -160,36 +167,40 @@ export default function ReportsScreen() {
     </View>
   ), [colors, styles]);
 
-  const renderInvestorItem = useCallback((item: any, index: number) => (
-    <View key={index} style={styles.card}>
-      <Text style={styles.cardTitle} numberOfLines={1}>
-        {item.name || item.investor_name || `Investidor #${index + 1}`}
-      </Text>
-      <View style={styles.cardRow}>
-        <Text style={styles.cardLabel}>Total Investido</Text>
-        <Text style={[styles.cardValue, { color: colors.accent }]}>
-          {formatCurrency(item.total_invested ?? 0)}
+  const renderInvestorItem = useCallback((item: any, index: number) => {
+    const inv = item.investor || item;
+    const investments = item.investments || item;
+    return (
+      <View key={index} style={styles.card}>
+        <Text style={styles.cardTitle} numberOfLines={1}>
+          {inv.name || `Investidor #${index + 1}`}
         </Text>
+        <View style={styles.cardRow}>
+          <Text style={styles.cardLabel}>Total Investido</Text>
+          <Text style={[styles.cardValue, { color: colors.accent }]}>
+            {formatCurrency(investments.total_invested ?? 0)}
+          </Text>
+        </View>
+        <View style={styles.cardRow}>
+          <Text style={styles.cardLabel}>Total Retornado</Text>
+          <Text style={[styles.cardValue, { color: colors.success }]}>
+            {formatCurrency(investments.total_returned ?? 0)}
+          </Text>
+        </View>
+        <View style={styles.cardRow}>
+          <Text style={styles.cardLabel}>ROI</Text>
+          <Text
+            style={[
+              styles.cardValue,
+              { color: (investments.roi ?? 0) >= 0 ? colors.success : colors.error },
+            ]}
+          >
+            {typeof investments.roi === 'number' ? `${investments.roi.toFixed(1)}%` : '-'}
+          </Text>
+        </View>
       </View>
-      <View style={styles.cardRow}>
-        <Text style={styles.cardLabel}>Total Retornado</Text>
-        <Text style={[styles.cardValue, { color: colors.success }]}>
-          {formatCurrency(item.total_returned ?? 0)}
-        </Text>
-      </View>
-      <View style={styles.cardRow}>
-        <Text style={styles.cardLabel}>ROI</Text>
-        <Text
-          style={[
-            styles.cardValue,
-            { color: (item.roi ?? 0) >= 0 ? colors.success : colors.error },
-          ]}
-        >
-          {typeof item.roi === 'number' ? `${item.roi.toFixed(1)}%` : '-'}
-        </Text>
-      </View>
-    </View>
-  ), [colors, styles]);
+    );
+  }, [colors, styles]);
 
   const renderPartsItem = useCallback((item: any, index: number) => (
     <View key={index} style={styles.card}>

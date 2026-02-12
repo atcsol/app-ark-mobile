@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Button } from '@ant-design/react-native';
+import { IconOutline } from '@ant-design/icons-react-native';
 import { adminApi } from '@/services/adminApi';
 import { ScreenContainer } from '@/components/layout';
 import { LoadingScreen, EmptyState, Avatar, StatCard, ConfirmModal } from '@/components/ui';
@@ -12,6 +13,7 @@ import type { Colors } from '@/theme/colors';
 import { formatCurrency } from '@/utils/formatters';
 import { usePermissions, useRefreshOnFocus } from '@/hooks';
 import type { Mechanic } from '@/types';
+import { SPECIALTY_ICON_MAP } from '@/constants';
 
 export default function MechanicDetailScreen() {
   const { colors } = useTheme();
@@ -114,9 +116,12 @@ export default function MechanicDetailScreen() {
 
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Especialidade</Text>
-          {mechanic.specialty ? (
-            <View style={styles.specialtyTag}>
-              <Text style={styles.specialtyText}>{mechanic.specialty}</Text>
+          {mechanic.specialties && mechanic.specialties.length > 0 ? (
+            <View style={[styles.specialtyTag, { flexDirection: 'row', alignItems: 'center' }]}>
+              {SPECIALTY_ICON_MAP[mechanic.specialties[0]] ? (
+                <IconOutline name={SPECIALTY_ICON_MAP[mechanic.specialties[0]] as any} size={12} color={styles.specialtyText.color} style={{ marginRight: 4 }} />
+              ) : null}
+              <Text style={styles.specialtyText}>{mechanic.specialties.join(', ')}</Text>
             </View>
           ) : (
             <Text style={styles.infoValue}>Nao informada</Text>

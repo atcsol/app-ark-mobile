@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@ant-design/react-native';
 import { adminApi } from '@/services/adminApi';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { ScreenContainer } from '@/components/layout';
 import { FormInput, FormCurrency, FormDatePicker, FormSelect } from '@/components/forms';
 import { spacing, heading, body, borderRadius } from '@/theme';
@@ -22,6 +23,7 @@ interface FormErrors {
 export default function VehicleCreateScreen() {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
+  const { handleError } = useErrorHandler();
   const router = useRouter();
 
   const [form, setForm] = useState<VehicleFormData>({
@@ -211,10 +213,8 @@ export default function VehicleCreateScreen() {
       Alert.alert('Sucesso', 'Veiculo cadastrado com sucesso.', [
         { text: 'OK', onPress: () => router.back() },
       ]);
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || err.message || 'Erro ao cadastrar veiculo';
-      Alert.alert('Erro', message);
+    } catch (error) {
+      handleError(error, 'createVehicle');
     } finally {
       setSubmitting(false);
     }

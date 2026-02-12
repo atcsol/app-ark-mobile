@@ -1,45 +1,24 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { WhiteSpace } from '@ant-design/react-native';
 import { useRouter } from 'expo-router';
 import { adminApi } from '@/services/adminApi';
 import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { SearchBar, LoadingScreen, EmptyState, RefreshableList, ConfirmModal } from '@/components/ui';
+import { IconOutline } from '@ant-design/icons-react-native';
 import { useAdaptiveLayout } from '@/hooks';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { heading, body, caption, spacing, borderRadius } from '@/theme';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
 import type { Category } from '@/types';
 import { usePermissions } from '@/hooks';
-
-const PRESET_COLORS: { value: string; hex: string }[] = [
-  { value: 'blue', hex: '#1890ff' },
-  { value: 'purple', hex: '#722ed1' },
-  { value: 'cyan', hex: '#13c2c2' },
-  { value: 'red', hex: '#f5222d' },
-  { value: 'gold', hex: '#faad14' },
-  { value: 'green', hex: '#52c41a' },
-  { value: 'orange', hex: '#fa8c16' },
-  { value: 'magenta', hex: '#eb2f96' },
-  { value: 'teal', hex: '#08979c' },
-  { value: 'lime', hex: '#a0d911' },
-  { value: 'indigo', hex: '#2f54eb' },
-  { value: 'brown', hex: '#8b4513' },
-  { value: 'pink', hex: '#ff85c0' },
-  { value: 'gray', hex: '#8c8c8c' },
-];
-
-function getColorHex(color?: string): string {
-  if (!color) return '#8c8c8c';
-  const preset = PRESET_COLORS.find(
-    (c) => c.value.toLowerCase() === color.toLowerCase(),
-  );
-  return preset ? preset.hex : color;
-}
+import { getColorHex } from '@/constants';
 
 export default function CategoriesScreen() {
   const styles = useThemeStyles(createStyles);
   const { can } = usePermissions();
+  const { handleError } = useErrorHandler();
   const { listContentStyle } = useAdaptiveLayout();
   const router = useRouter();
 
@@ -60,10 +39,9 @@ export default function CategoriesScreen() {
       if (search.trim()) params.search = search.trim();
       const data = await adminApi.getCategories(params);
       setCategories(data.data || data);
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || err.message || 'Erro ao carregar categorias';
-      setError(message);
+    } catch (error) {
+      const apiError = handleError(error, 'fetchCategories', { silent: true });
+      setError(apiError.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -106,10 +84,8 @@ export default function CategoriesScreen() {
       await adminApi.deleteCategory(deleteTarget.id);
       setDeleteTarget(null);
       fetchCategories();
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || err.message || 'Erro ao excluir categoria';
-      Alert.alert('Erro', message);
+    } catch (error) {
+      handleError(error, 'deleteCategory');
     } finally {
       setDeleting(false);
     }
@@ -146,7 +122,7 @@ export default function CategoriesScreen() {
             </Text>
           </View>
           {item.icon ? (
-            <Text style={styles.cardIcon}>{item.icon}</Text>
+            <IconOutline name={item.icon as any} size={20} color={colorHex} />
           ) : null}
         </View>
 
@@ -250,8 +226,7 @@ const createStyles = (colors: Colors) => ({
     flex: 1,
   },
   cardIcon: {
-    ...body.md,
-    color: colors.textTertiary,
+    marginLeft: spacing.xs,
   },
   cardFooter: {
     flexDirection: 'row' as const,

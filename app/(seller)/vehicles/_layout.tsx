@@ -13,6 +13,7 @@ export default function VehiclesLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="[uuid]" options={{ title: 'Detalhes do Veículo', headerBackTitle: 'Voltar' }} />
     </Stack>
   );
 }

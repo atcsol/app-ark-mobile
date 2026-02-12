@@ -13,6 +13,7 @@ import { InputItem, Button, Toast } from '@ant-design/react-native';
 import { router } from 'expo-router';
 import apiClient from '@/services/api';
 import { useAdaptiveLayout } from '@/hooks';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { spacing, heading, body, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
@@ -24,6 +25,7 @@ export default function ForgotPasswordScreen() {
   const [success, setSuccess] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState('');
   const { colors } = useTheme();
+  const { handleError } = useErrorHandler();
   const styles = useThemeStyles(createStyles);
   const { paddingHorizontal } = useAdaptiveLayout();
 
@@ -38,10 +40,8 @@ export default function ForgotPasswordScreen() {
       await apiClient.forgotPassword(email.trim());
       setSubmittedEmail(email.trim());
       setSuccess(true);
-    } catch (error: any) {
-      const message =
-        error.response?.data?.message || error.message || 'Erro ao enviar e-mail';
-      Toast.fail(message);
+    } catch (error) {
+      handleError(error, 'forgotPassword');
     } finally {
       setLoading(false);
     }

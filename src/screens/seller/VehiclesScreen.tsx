@@ -37,6 +37,7 @@ export default function VehiclesScreen() {
         setError(null);
         const params: Record<string, any> = {
           page: pageNum,
+          per_page: 20,
           search: search || undefined,
         };
 

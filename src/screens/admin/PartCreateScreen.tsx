@@ -3,6 +3,7 @@ import { View, Text, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@ant-design/react-native';
 import { adminApi } from '@/services/adminApi';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { ScreenContainer } from '@/components/layout';
 import { FormInput, FormCurrency, FormSelect } from '@/components/forms';
 import { spacing, heading, body, borderRadius } from '@/theme';
@@ -33,6 +34,7 @@ interface FormErrors {
 
 export default function PartCreateScreen() {
   const styles = useThemeStyles(createStyles);
+  const { handleError } = useErrorHandler();
   const router = useRouter();
 
   const [categoryOptions, setCategoryOptions] = useState<SelectOption[]>([]);
@@ -60,7 +62,7 @@ export default function PartCreateScreen() {
         ]);
         const cats = catRes.data || catRes;
         setCategoryOptions(
-          cats.map((c: any) => ({ label: c.name, value: c.id }))
+          cats.map((c: any) => ({ label: c.name, value: c.id, icon: c.icon || undefined, color: c.color_hex || undefined }))
             .sort((a: any, b: any) => a.label.localeCompare(b.label))
         );
         const brands = brandRes.data || brandRes;
@@ -129,10 +131,8 @@ export default function PartCreateScreen() {
       Alert.alert('Sucesso', 'Peca cadastrada com sucesso.', [
         { text: 'OK', onPress: () => router.back() },
       ]);
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || err.message || 'Erro ao cadastrar peca';
-      Alert.alert('Erro', message);
+    } catch (error) {
+      handleError(error, 'createPart');
     } finally {
       setSubmitting(false);
     }

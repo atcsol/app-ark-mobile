@@ -58,7 +58,8 @@
           "organization": "YOUR_SENTRY_ORG",
           "project": "ark-garage-mobile"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "scheme": "arkgarage"
   }

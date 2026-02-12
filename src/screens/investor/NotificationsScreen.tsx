@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { investorApi } from '@/services/investorApi';
 import { ScreenContainer, ScreenHeader } from '@/components/layout';
 import { RefreshableList, LoadingScreen, EmptyState } from '@/components/ui';
 import { useRefreshOnFocus, useAdaptiveLayout } from '@/hooks';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
@@ -23,6 +24,7 @@ const NOTIFICATION_TYPE_COLORS: Record<string, string> = {
 export default function InvestorNotificationsScreen() {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
+  const { handleError } = useErrorHandler();
   const { listContentStyle } = useAdaptiveLayout();
 
   const [notifications, setNotifications] = useState<InvestorNotification[]>([]);
@@ -37,10 +39,9 @@ export default function InvestorNotificationsScreen() {
       const response = await investorApi.getNotifications();
       const data = Array.isArray(response) ? response : response.data ?? [];
       setNotifications(data);
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || err.message || 'Erro ao carregar notificacoes';
-      setError(message);
+    } catch (error) {
+      const apiError = handleError(error, 'fetchNotifications', { silent: true });
+      setError(apiError.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -68,10 +69,8 @@ export default function InvestorNotificationsScreen() {
           read_at: n.read_at || new Date().toISOString(),
         })),
       );
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || err.message || 'Erro ao marcar notificacoes';
-      Alert.alert('Erro', message);
+    } catch (error) {
+      handleError(error, 'markAllRead');
     } finally {
       setMarkingAll(false);
     }

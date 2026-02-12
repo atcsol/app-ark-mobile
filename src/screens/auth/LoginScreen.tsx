@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { InputItem, Button, Toast } from '@ant-design/react-native';
 import { router } from 'expo-router';
 import { useAuth, useBiometrics } from '@/hooks';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { API_BASE_URL } from '@/utils/constants';
 import { spacing, heading, body, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
@@ -31,6 +32,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, isLoading } = useAuth();
+  const { handleError } = useErrorHandler();
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
 
@@ -110,8 +112,8 @@ export default function LoginScreen() {
           Toast.fail(result.message || 'Falha no login biometrico');
         }
       }
-    } catch (err) {
-      Toast.fail('Erro na autenticacao biometrica');
+    } catch (error) {
+      handleError(error, 'biometricLogin');
     } finally {
       setBiometricLoading(false);
     }
@@ -196,23 +198,34 @@ export default function LoginScreen() {
                   {isLoading ? 'Verificando...' : 'Entrar'}
                 </Button>
 
-                {isBiometricAvailable && isBiometricEnabled && (
+                {isBiometricAvailable && (
                   <>
                     <View style={styles.buttonSpacer} />
-                    <Pressable
-                      onPress={handleBiometricLogin}
-                      disabled={biometricLoading}
-                      style={styles.biometricButton}
-                    >
-                      <Text style={styles.biometricIcon}>
-                        {biometricType === 'Face ID' ? '👤' : '👆'}
-                      </Text>
-                      <Text style={styles.biometricText}>
-                        {biometricLoading
-                          ? 'Verificando...'
-                          : `Entrar com ${biometricType || 'Biometria'}`}
-                      </Text>
-                    </Pressable>
+                    {isBiometricEnabled ? (
+                      <Pressable
+                        onPress={handleBiometricLogin}
+                        disabled={biometricLoading}
+                        style={styles.biometricButton}
+                      >
+                        <Text style={styles.biometricIcon}>
+                          {biometricType === 'Face ID' ? '👤' : '👆'}
+                        </Text>
+                        <Text style={styles.biometricText}>
+                          {biometricLoading
+                            ? 'Verificando...'
+                            : `Entrar com ${biometricType || 'Biometria'}`}
+                        </Text>
+                      </Pressable>
+                    ) : (
+                      <View style={styles.biometricHint}>
+                        <Text style={styles.biometricHintIcon}>
+                          {biometricType === 'Face ID' ? '👤' : '👆'}
+                        </Text>
+                        <Text style={styles.biometricHintText}>
+                          {biometricType || 'Biometria'} disponivel neste dispositivo
+                        </Text>
+                      </View>
+                    )}
                   </>
                 )}
 
@@ -343,5 +356,20 @@ const createStyles = (colors: Colors) => ({
     ...body.md,
     color: colors.accent,
     fontWeight: '600' as const,
+  },
+  biometricHint: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingVertical: spacing.sm,
+    gap: spacing.xs,
+    opacity: 0.6,
+  },
+  biometricHintIcon: {
+    fontSize: 16,
+  },
+  biometricHintText: {
+    ...body.sm,
+    color: colors.textTertiary,
   },
 });

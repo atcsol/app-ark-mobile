@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput } from 'react-native';
-import { Modal, Button } from '@ant-design/react-native';
-import { spacing, heading, body, borderRadius } from '@/theme';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Modal } from '@ant-design/react-native';
+import { spacing, body, caption, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
@@ -75,22 +75,32 @@ export function ConfirmModal({
         )}
 
         <View style={styles.buttons}>
-          <Button
+          <TouchableOpacity
             style={styles.cancelBtn}
             onPress={handleCancel}
             disabled={loading}
+            activeOpacity={0.7}
           >
-            {cancelLabel}
-          </Button>
-          <Button
-            type={danger ? 'warning' : 'primary'}
-            style={styles.confirmBtn}
+            <Text style={styles.cancelBtnText}>{cancelLabel}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.confirmBtn,
+              danger ? styles.confirmBtnDanger : styles.confirmBtnPrimary,
+              confirmDisabled && styles.confirmBtnDisabled,
+            ]}
             onPress={handleConfirm}
             disabled={confirmDisabled}
-            loading={loading}
+            activeOpacity={0.7}
           >
-            {confirmLabel}
-          </Button>
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={[styles.confirmBtnText, confirmDisabled && styles.confirmBtnTextDisabled]}>
+                {confirmLabel}
+              </Text>
+            )}
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -99,36 +109,71 @@ export function ConfirmModal({
 
 const createStyles = (colors: Colors) => ({
   content: {
-    padding: spacing.xl,
+    padding: spacing.lg,
   },
   title: {
-    ...heading.h3,
+    ...body.lg,
+    fontWeight: '600' as const,
     color: colors.textPrimary,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   message: {
-    ...body.md,
+    ...caption.md,
     color: colors.textSecondary,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
+    lineHeight: 18,
   },
   reasonInput: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
-    padding: spacing.md,
-    ...body.md,
+    padding: spacing.sm,
+    ...body.sm,
     color: colors.textPrimary,
-    minHeight: 80,
-    marginBottom: spacing.lg,
+    minHeight: 72,
+    marginBottom: spacing.md,
   },
   buttons: {
     flexDirection: 'row' as const,
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   cancelBtn: {
     flex: 1,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    backgroundColor: colors.white,
+  },
+  cancelBtnText: {
+    ...body.sm,
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
   },
   confirmBtn: {
     flex: 1,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  confirmBtnPrimary: {
+    backgroundColor: colors.accent,
+  },
+  confirmBtnDanger: {
+    backgroundColor: colors.error,
+  },
+  confirmBtnDisabled: {
+    opacity: 0.5,
+  },
+  confirmBtnText: {
+    ...body.sm,
+    fontWeight: '500' as const,
+    color: colors.white,
+  },
+  confirmBtnTextDisabled: {
+    color: colors.white,
   },
 });

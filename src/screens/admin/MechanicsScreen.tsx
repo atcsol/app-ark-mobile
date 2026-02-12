@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { IconOutline } from '@ant-design/icons-react-native';
 import { adminApi } from '@/services/adminApi';
 import { SearchBar, RefreshableList, EmptyState, LoadingScreen, Avatar, StatusTag } from '@/components/ui';
 import { ScreenContainer, ScreenHeader } from '@/components/layout';
@@ -11,6 +12,7 @@ import type { Colors } from '@/theme/colors';
 import { formatCurrency } from '@/utils/formatters';
 import { useRefreshOnFocus, usePermissions, useAdaptiveLayout } from '@/hooks';
 import type { Mechanic, PaginatedResponse } from '@/types';
+import { SPECIALTY_ICON_MAP } from '@/constants';
 
 const PER_PAGE = 20;
 
@@ -95,9 +97,12 @@ export default function MechanicsScreen() {
             <Text style={styles.cardName} numberOfLines={1}>
               {item.name}
             </Text>
-            {item.specialty ? (
-              <View style={styles.specialtyTag}>
-                <Text style={styles.specialtyText}>{item.specialty}</Text>
+            {item.specialties && item.specialties.length > 0 ? (
+              <View style={[styles.specialtyTag, { flexDirection: 'row', alignItems: 'center' }]}>
+                {SPECIALTY_ICON_MAP[item.specialties[0]] ? (
+                  <IconOutline name={SPECIALTY_ICON_MAP[item.specialties[0]] as any} size={12} color={styles.specialtyText.color} style={{ marginRight: 4 }} />
+                ) : null}
+                <Text style={styles.specialtyText}>{item.specialties.join(', ')}</Text>
               </View>
             ) : null}
           </View>

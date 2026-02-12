@@ -4,6 +4,7 @@ import { Button, WhiteSpace } from '@ant-design/react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useAuthStore } from '@/stores/authStore';
 import apiClient from '@/services/api';
 import { adminApi } from '@/services/adminApi';
@@ -19,6 +20,7 @@ export default function AdminProfileScreen() {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const { user, logout } = useAuth();
+  const { handleError } = useErrorHandler();
 
   // Edit profile state
   const [name, setName] = useState(user?.name || '');
@@ -97,12 +99,12 @@ export default function AdminProfileScreen() {
       }
 
       Alert.alert('Sucesso', 'Foto de perfil atualizada.');
-    } catch (err: any) {
-      Alert.alert('Erro', err.response?.data?.message || 'Erro ao enviar foto.');
+    } catch (error) {
+      handleError(error, 'uploadAvatar');
     } finally {
       setAvatarLoading(false);
     }
-  }, []);
+  }, [handleError]);
 
   const handleDeleteAvatar = useCallback(() => {
     Alert.alert('Remover Foto', 'Deseja remover sua foto de perfil?', [
@@ -123,8 +125,8 @@ export default function AdminProfileScreen() {
                 avatar: null,
               });
             }
-          } catch (err: any) {
-            Alert.alert('Erro', err.response?.data?.message || 'Erro ao remover foto.');
+          } catch (error) {
+            handleError(error, 'deleteAvatar');
           } finally {
             setAvatarLoading(false);
           }
@@ -158,13 +160,12 @@ export default function AdminProfileScreen() {
       useAuthStore.getState().setUser(updatedUser);
 
       Alert.alert('Sucesso', 'Perfil atualizado com sucesso.');
-    } catch (err: any) {
-      const message = err.response?.data?.message || 'Erro ao atualizar perfil.';
-      Alert.alert('Erro', message);
+    } catch (error) {
+      handleError(error, 'saveProfile');
     } finally {
       setProfileLoading(false);
     }
-  }, [name, email, phone, user]);
+  }, [name, email, phone, user, handleError]);
 
   // --- Change Password ---
   const handleChangePassword = useCallback(async () => {
@@ -195,13 +196,12 @@ export default function AdminProfileScreen() {
       setConfirmPassword('');
 
       Alert.alert('Sucesso', 'Senha alterada com sucesso.');
-    } catch (err: any) {
-      const message = err.response?.data?.message || 'Erro ao alterar senha.';
-      Alert.alert('Erro', message);
+    } catch (error) {
+      handleError(error, 'changePassword');
     } finally {
       setPasswordLoading(false);
     }
-  }, [currentPassword, newPassword, confirmPassword]);
+  }, [currentPassword, newPassword, confirmPassword, handleError]);
 
   // --- Logout ---
   const handleLogout = useCallback(() => {

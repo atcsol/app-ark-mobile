@@ -13,6 +13,7 @@ export default function SalesLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="[uuid]" options={{ title: 'Detalhes da Venda', headerBackTitle: 'Voltar' }} />
     </Stack>
   );
 }

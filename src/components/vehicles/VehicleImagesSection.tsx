@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { adminApi } from '@/services/adminApi';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { FallbackImage } from '@/components/ui';
 import { usePermissions, useAdaptiveLayout } from '@/hooks';
 import { spacing, body, caption, heading, borderRadius } from '@/theme';
@@ -31,6 +32,7 @@ export function VehicleImagesSection({ vehicleId, images, onRefresh }: Props) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const { can } = usePermissions();
+  const { handleError } = useErrorHandler();
   const { width: windowWidth } = useWindowDimensions();
   const { paddingHorizontal } = useAdaptiveLayout();
   const imageSize = (windowWidth - paddingHorizontal * 2 - IMAGE_GAP * (IMAGES_PER_ROW - 1)) / IMAGES_PER_ROW;
@@ -61,8 +63,8 @@ export function VehicleImagesSection({ vehicleId, images, onRefresh }: Props) {
       await adminApi.uploadVehicleImages(vehicleId, formData);
       Alert.alert('Sucesso', `${result.assets.length} imagem(ns) enviada(s).`);
       onRefresh();
-    } catch (err: any) {
-      Alert.alert('Erro', err.response?.data?.message || 'Erro ao enviar imagens.');
+    } catch (error) {
+      handleError(error, 'uploadImages');
     } finally {
       setUploading(false);
     }
@@ -74,8 +76,8 @@ export function VehicleImagesSection({ vehicleId, images, onRefresh }: Props) {
       try {
         await adminApi.setPrimaryVehicleImage(vehicleId, imageId);
         onRefresh();
-      } catch (err: any) {
-        Alert.alert('Erro', err.response?.data?.message || 'Erro ao definir imagem principal.');
+      } catch (error) {
+        handleError(error, 'setPrimaryImage');
       } finally {
         setActionLoading(null);
       }
@@ -95,8 +97,8 @@ export function VehicleImagesSection({ vehicleId, images, onRefresh }: Props) {
             try {
               await adminApi.deleteVehicleImage(vehicleId, imageId);
               onRefresh();
-            } catch (err: any) {
-              Alert.alert('Erro', err.response?.data?.message || 'Erro ao remover imagem.');
+            } catch (error) {
+              handleError(error, 'deleteImage');
             } finally {
               setActionLoading(null);
             }

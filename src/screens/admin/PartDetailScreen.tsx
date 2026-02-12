@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, WhiteSpace } from '@ant-design/react-native';
 import { adminApi } from '@/services/adminApi';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { ScreenContainer } from '@/components/layout';
 import { LoadingScreen, EmptyState, ConfirmModal } from '@/components/ui';
 import { heading, body, caption, spacing, borderRadius } from '@/theme';
@@ -41,6 +42,7 @@ export default function PartDetailScreen() {
   const { uuid } = useLocalSearchParams<{ uuid: string }>();
   const router = useRouter();
   const { can } = usePermissions();
+  const { handleError } = useErrorHandler();
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const infoRowStylesThemed = useThemeStyles(createInfoRowStyles);
@@ -60,9 +62,9 @@ export default function PartDetailScreen() {
       setError(null);
       const data = await adminApi.getPart(uuid);
       setPart(data.data || data);
-    } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Erro ao carregar peca';
-      setError(message);
+    } catch (error) {
+      const apiError = handleError(error, 'fetchPart', { silent: true });
+      setError(apiError.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -87,9 +89,8 @@ export default function PartDetailScreen() {
       Alert.alert('Sucesso', 'Peca excluida com sucesso.', [
         { text: 'OK', onPress: () => router.back() },
       ]);
-    } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Erro ao excluir peca';
-      Alert.alert('Erro', message);
+    } catch (error) {
+      handleError(error, 'deletePart');
     } finally {
       setDeleting(false);
     }

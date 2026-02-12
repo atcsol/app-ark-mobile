@@ -43,6 +43,7 @@ export interface PaginationMeta {
 export interface ApiError {
   success: false;
   message: string;
+  error_code?: string;
   errors?: Record<string, string[]>;
 }
 
@@ -56,6 +57,8 @@ export interface ApiError {
 export interface SelectOption<V = string> {
   label: string;
   value: V;
+  icon?: string;
+  color?: string;
 }
 
 /**

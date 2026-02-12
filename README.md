@@ -1,4 +1,4 @@
-# ARK Garage - Mobile Authentication (React Native)
+r# ARK Garage - Mobile Authentication (React Native)
 
 Complete authentication system built with React Native, Expo, TypeScript, and Ant Design Mobile.
 

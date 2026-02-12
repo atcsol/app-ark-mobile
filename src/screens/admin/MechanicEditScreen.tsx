@@ -11,21 +11,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
 import type { Colors } from '@/theme/colors';
 import type { Mechanic } from '@/types';
-
-const SPECIALTY_OPTIONS = [
-  { label: 'Mecanica Geral', value: 'Mecanica Geral' },
-  { label: 'Motor', value: 'Motor' },
-  { label: 'Transmissao', value: 'Transmissao' },
-  { label: 'Suspensao', value: 'Suspensao' },
-  { label: 'Freios', value: 'Freios' },
-  { label: 'Sistema Eletrico', value: 'Sistema Eletrico' },
-  { label: 'Ar Condicionado', value: 'Ar Condicionado' },
-  { label: 'Funilaria', value: 'Funilaria' },
-  { label: 'Pintura', value: 'Pintura' },
-  { label: 'Diagnostico Eletronico', value: 'Diagnostico Eletronico' },
-  { label: 'Injecao Eletronica', value: 'Injecao Eletronica' },
-  { label: 'Alinhamento e Balanceamento', value: 'Alinhamento e Balanceamento' },
-];
+import { SPECIALTY_OPTIONS } from '@/constants';
 
 const STATUS_OPTIONS = [
   { label: 'Ativo', value: 'active' },
@@ -248,7 +234,11 @@ export default function MechanicEditScreen() {
         <FormSelect
           label="Especialidade"
           value={form.specialty}
-          options={SPECIALTY_OPTIONS}
+          options={
+            form.specialty && !SPECIALTY_OPTIONS.some((o) => o.value === form.specialty)
+              ? [{ label: form.specialty, value: form.specialty }, ...SPECIALTY_OPTIONS]
+              : SPECIALTY_OPTIONS
+          }
           onValueChange={(value) => updateField('specialty', value)}
           placeholder="Selecione a especialidade..."
         />

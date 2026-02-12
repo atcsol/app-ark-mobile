@@ -10,6 +10,7 @@ import {
 import { Button } from '@ant-design/react-native';
 import { adminApi } from '@/services/adminApi';
 import { usePermissions } from '@/hooks';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { FormInput, FormCurrency } from '@/components/forms';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
@@ -40,6 +41,7 @@ export function VehicleInvestorsSection({ vehicleId, investor, onRefresh }: Prop
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const { can } = usePermissions();
+  const { handleError } = useErrorHandler();
   const [showForm, setShowForm] = useState(false);
   const [allInvestors, setAllInvestors] = useState<Investor[]>([]);
   const [selectedInvestorId, setSelectedInvestorId] = useState<string | null>(null);
@@ -93,8 +95,8 @@ export function VehicleInvestorsSection({ vehicleId, investor, onRefresh }: Prop
       setCommission('');
       setNotes('');
       onRefresh();
-    } catch (err: any) {
-      Alert.alert('Erro', err.response?.data?.message || 'Erro ao vincular investidor.');
+    } catch (error) {
+      handleError(error, 'attachInvestor');
     } finally {
       setSaving(false);
     }
@@ -113,8 +115,8 @@ export function VehicleInvestorsSection({ vehicleId, investor, onRefresh }: Prop
             const investorId = investor.uuid || investor.id;
             await adminApi.detachVehicleInvestor(vehicleId, investorId);
             onRefresh();
-          } catch (err: any) {
-            Alert.alert('Erro', err.response?.data?.message || 'Erro ao remover investidor.');
+          } catch (error) {
+            handleError(error, 'detachInvestor');
           } finally {
             setRemoving(false);
           }

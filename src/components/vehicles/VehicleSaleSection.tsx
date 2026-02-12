@@ -11,6 +11,7 @@ import {
 import { Button } from '@ant-design/react-native';
 import { adminApi } from '@/services/adminApi';
 import { usePermissions } from '@/hooks';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { FormInput } from '@/components/forms';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
@@ -28,6 +29,7 @@ export function VehicleSaleSection({ vehicle, onRefresh }: Props) {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
   const { can } = usePermissions();
+  const { handleError } = useErrorHandler();
   const [showForm, setShowForm] = useState(false);
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
@@ -78,8 +80,8 @@ export function VehicleSaleSection({ vehicle, onRefresh }: Props) {
       Alert.alert('Sucesso', 'Venda registrada com sucesso.');
       setShowForm(false);
       onRefresh();
-    } catch (err: any) {
-      Alert.alert('Erro', err.response?.data?.message || 'Erro ao registrar venda.');
+    } catch (error) {
+      handleError(error, 'registerSale');
     } finally {
       setSaving(false);
     }

@@ -32,6 +32,12 @@ interface CompanyLogo {
 
 const MAIL_MAILER_OPTIONS = ['log', 'smtp'];
 const MAIL_ENCRYPTION_OPTIONS = ['tls', 'ssl', 'none'];
+const CURRENCY_OPTIONS = [
+  { code: 'USD', label: 'USD - US Dollar', locale: 'en-US' },
+  { code: 'BRL', label: 'BRL - Real Brasileiro', locale: 'pt-BR' },
+  { code: 'EUR', label: 'EUR - Euro', locale: 'de-DE' },
+  { code: 'GBP', label: 'GBP - British Pound', locale: 'en-GB' },
+];
 
 export default function SettingsScreen() {
   const { colors } = useTheme();
@@ -50,6 +56,10 @@ export default function SettingsScreen() {
   const [savingMail, setSavingMail] = useState(false);
   const [testingEmail, setTestingEmail] = useState(false);
   const [testEmailAddress, setTestEmailAddress] = useState('');
+
+  // Regional
+  const [currencyCode, setCurrencyCode] = useState('USD');
+  const [savingRegional, setSavingRegional] = useState(false);
 
   // Branding
   const [logo, setLogo] = useState<CompanyLogo | null>(null);
@@ -87,6 +97,13 @@ export default function SettingsScreen() {
               strMap[item.key] = String(item.value ?? '');
             });
             setMailSettings(strMap);
+          }
+          if (group.group === 'regional') {
+            group.items.forEach((item) => {
+              if (item.key === 'currency_code') {
+                setCurrencyCode(String(item.value ?? 'USD'));
+              }
+            });
           }
         });
       }
@@ -151,6 +168,26 @@ export default function SettingsScreen() {
     [permissionsSettings],
   );
 
+  // --- Regional handlers ---
+  const handleCurrencyChange = useCallback(async (code: string) => {
+    const prev = currencyCode;
+    setCurrencyCode(code);
+    setSavingRegional(true);
+    try {
+      const opt = CURRENCY_OPTIONS.find((c) => c.code === code);
+      await adminApi.bulkUpdateSettings([
+        { key: 'currency_code', value: code },
+        { key: 'currency_locale', value: opt?.locale || 'en-US' },
+      ]);
+      Alert.alert('Sucesso', 'Moeda atualizada.');
+    } catch (err: any) {
+      setCurrencyCode(prev);
+      Alert.alert('Erro', err.response?.data?.message || 'Erro ao salvar');
+    } finally {
+      setSavingRegional(false);
+    }
+  }, [currencyCode]);
+
   // --- Mail handlers ---
   const updateMailField = useCallback((key: string, value: string) => {
     setMailSettings((prev) => ({ ...prev, [key]: value }));
@@ -163,7 +200,7 @@ export default function SettingsScreen() {
         key,
         value,
       }));
-      await adminApi.bulkUpdateSettings({ settings });
+      await adminApi.bulkUpdateSettings(settings);
       Alert.alert('Sucesso', 'Configuracoes de email salvas.');
     } catch (err: any) {
       Alert.alert('Erro', err.response?.data?.message || 'Erro ao salvar');
@@ -297,6 +334,46 @@ export default function SettingsScreen() {
           />
         </View>
       </View>
+
+      {/* Regional Section */}
+      {isSuperAdmin && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Regional</Text>
+          <Text style={styles.sectionDescription}>
+            Configure a moeda utilizada no sistema.
+          </Text>
+
+          <View style={styles.card}>
+            <Text style={styles.fieldLabel}>Moeda</Text>
+            <View style={styles.optionsRow}>
+              {CURRENCY_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.code}
+                  style={[
+                    styles.optionChip,
+                    currencyCode === opt.code && styles.optionChipActive,
+                  ]}
+                  onPress={() => handleCurrencyChange(opt.code)}
+                  disabled={savingRegional}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.optionChipText,
+                      currencyCode === opt.code && styles.optionChipTextActive,
+                    ]}
+                  >
+                    {opt.code}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.currencyHint}>
+              {CURRENCY_OPTIONS.find((c) => c.code === currencyCode)?.label || currencyCode}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Branding Section */}
       {isSuperAdmin && (
@@ -685,6 +762,11 @@ const createStyles = (colors: Colors) => ({
   },
   optionChipTextActive: {
     color: colors.white,
+  },
+  currencyHint: {
+    ...caption.sm,
+    color: colors.textTertiary,
+    marginTop: spacing.xs,
   },
   saveBtn: {
     borderRadius: borderRadius.md,

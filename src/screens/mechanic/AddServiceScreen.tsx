@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@ant-design/react-native';
 import { mechanicApi } from '@/services/mechanicApi';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { ScreenContainer } from '@/components/layout';
 import { LoadingScreen } from '@/components/ui';
 import { FormInput, FormSelect, FormDatePicker } from '@/components/forms';
@@ -38,6 +39,7 @@ const EMPTY_FORM: FormData = {
 export default function AddServiceScreen() {
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
+  const { handleError } = useErrorHandler();
   const router = useRouter();
 
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
@@ -61,10 +63,8 @@ export default function AddServiceScreen() {
 
         const servicesData = servicesRes.data || servicesRes;
         setServiceCatalog(Array.isArray(servicesData) ? servicesData : []);
-      } catch (err: any) {
-        const message =
-          err.response?.data?.message || err.message || 'Erro ao carregar dados';
-        Alert.alert('Erro', message);
+      } catch (error) {
+        handleError(error, 'loadServiceData');
       } finally {
         setLoadingData(false);
       }
@@ -143,10 +143,8 @@ export default function AddServiceScreen() {
       Alert.alert('Sucesso', 'Servico adicionado com sucesso.', [
         { text: 'OK', onPress: () => router.back() },
       ]);
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || err.message || 'Erro ao adicionar servico';
-      Alert.alert('Erro', message);
+    } catch (error) {
+      handleError(error, 'addService');
     } finally {
       setSubmitting(false);
     }

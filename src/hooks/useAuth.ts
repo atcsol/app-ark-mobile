@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import apiClient from '@/services/api';
+import { ApiError } from '@/utils/apiError';
 import type { UserType } from '@/types/auth';
 
 export function useAuth() {
@@ -26,7 +27,7 @@ export function useAuth() {
         throw new Error(response.message || 'Falha no login');
       }
 
-      const type = response.user_type as UserType;
+      const type = response.data.user_type as UserType;
       let authToken: string;
       let userData: any;
 
@@ -87,13 +88,9 @@ export function useAuth() {
             // Update user data with fresh data from /auth/me (includes roles.permissions)
             await storeLogin(authToken, type, freshUser);
           }
-        } catch (meErr: any) {
+        } catch (meErr) {
           if (__DEV__) {
-            console.log('[Auth] /auth/me verification failed:', {
-              status: meErr.response?.status,
-              message: meErr.response?.data?.message || meErr.message,
-              error: meErr.response?.data?.error,
-            });
+            console.log('[Auth] /auth/me verification failed:', meErr);
           }
           // If /auth/me fails, the token is likely invalid
           // Still proceed - the user will see errors on the dashboard
@@ -101,18 +98,13 @@ export function useAuth() {
       }
 
       return { success: true, userType: type };
-    } catch (error: any) {
+    } catch (error) {
       setLoading(false);
       if (__DEV__) {
-        console.log('[Auth] Login error:', {
-          status: error.response?.status,
-          message: error.response?.data?.message || error.message,
-          data: error.response?.data,
-        });
+        console.log('[Auth] Login error:', error);
       }
-      const message =
-        error.response?.data?.message || error.message || 'Erro de conexão';
-      return { success: false, message };
+      const apiError = ApiError.fromError(error);
+      return { success: false, message: apiError.userMessage };
     }
   }, [storeLogin, setLoading]);
 
