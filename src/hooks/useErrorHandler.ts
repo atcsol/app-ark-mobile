@@ -42,6 +42,12 @@ export function useErrorHandler() {
       return apiError;
     }
 
+    // Rate limit (429): aviso para aguardar, não é erro do servidor
+    if (apiError.isRateLimitError) {
+      Alert.alert('Muitas tentativas', apiError.userMessage);
+      return apiError;
+    }
+
     // Demais erros: exibir alerta ao usuário
     Alert.alert('Erro', apiError.userMessage);
 

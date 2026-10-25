@@ -5,6 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/hooks/useAuth';
 import { spacing, body, heading, caption, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
@@ -32,7 +33,8 @@ const HIDDEN_SCREENS = ['menu'];
 function CustomDrawerContent(props: any) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
+  // useAuth().logout revoga o token no servidor e apaga o login biométrico salvo
+  const { logout } = useAuth();
   const { colors } = useTheme();
   const styles = useThemeStyles(createStyles);
 

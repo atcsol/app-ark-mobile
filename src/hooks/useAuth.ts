@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import apiClient from '@/services/api';
 import { ApiError } from '@/utils/apiError';
+import { clearBiometricCredentials } from '@/utils/storage';
 import type { UserType } from '@/types/auth';
 
 export function useAuth() {
@@ -60,7 +61,6 @@ export function useAuth() {
         console.log('[Auth] Token extracted:', {
           type,
           tokenLength: authToken.length,
-          tokenPreview: `${authToken.substring(0, 15)}...`,
           hasUserData: !!userData,
           userRoles: userData?.roles?.map((r: any) => typeof r === 'string' ? r : r.name),
         });
@@ -122,6 +122,11 @@ export function useAuth() {
     } catch {
       // Ignore logout API errors
     } finally {
+      // Explicit logout also forgets biometric login. The automatic logout on 401
+      // (services/api.ts) calls the store directly and keeps it.
+      await clearBiometricCredentials().catch(() => {
+        // Ignore: failing to clear must not block the logout
+      });
       await storeLogout();
     }
   }, [userType, storeLogout]);

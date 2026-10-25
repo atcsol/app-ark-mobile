@@ -7,6 +7,17 @@ export const STORAGE_KEYS = {
   USER_DATA: 'ark_user_data',
 } as const;
 
+// Biometric login keys. Kept out of STORAGE_KEYS on purpose: the automatic
+// logout on 401 (clearAll) keeps them, the explicit logout removes them.
+export const BIOMETRIC_STORAGE_KEYS = {
+  CREDENTIALS: 'ark_biometric_credentials',
+  ENABLED: 'ark_biometric_enabled',
+} as const;
+
+// Marker stored under BIOMETRIC_STORAGE_KEYS.ENABLED. Older builds stored 'true' and kept the
+// credentials without biometric protection; any other value is treated as legacy and wiped.
+export const BIOMETRIC_ENABLED_VALUE = 'v2';
+
 export const USER_TYPES = {
   ADMIN: 'admin',
   SELLER: 'seller',

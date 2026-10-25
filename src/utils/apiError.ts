@@ -101,6 +101,10 @@ export class ApiError {
     return this.category === ErrorCategory.SERVER;
   }
 
+  get isRateLimitError(): boolean {
+    return this.category === ErrorCategory.RATE_LIMIT;
+  }
+
   get userMessage(): string {
     if (this.isNetworkError) {
       return 'Sem conexão com o servidor. Verifique sua internet.';
@@ -119,6 +123,8 @@ function categorizeByCode(code: string): ErrorCategory {
   if (code.startsWith('AUTH_')) return ErrorCategory.AUTH;
   if (code.startsWith('AUTHZ_')) return ErrorCategory.PERMISSION;
   if (code === ErrorCode.VALIDATION_FAILED) return ErrorCategory.VALIDATION;
+  if (code === ErrorCode.RATE_LIMITED) return ErrorCategory.RATE_LIMIT;
+  if (code === ErrorCode.BAD_REQUEST) return ErrorCategory.BAD_REQUEST;
   if (code === ErrorCode.RESOURCE_NOT_FOUND) return ErrorCategory.NOT_FOUND;
   if (code.startsWith('RESOURCE_')) return ErrorCategory.BUSINESS;
   if (
@@ -139,6 +145,8 @@ function categorizeByStatus(status: number): ErrorCategory {
   if (status === 403) return ErrorCategory.PERMISSION;
   if (status === 404) return ErrorCategory.NOT_FOUND;
   if (status === 422) return ErrorCategory.VALIDATION;
+  if (status === 429) return ErrorCategory.RATE_LIMIT;
+  if (status === 400) return ErrorCategory.BAD_REQUEST;
   if (status >= 500) return ErrorCategory.SERVER;
   return ErrorCategory.SERVER;
 }
@@ -157,6 +165,10 @@ function defaultMessageForCategory(category: ErrorCategory): string {
       return 'Recurso não encontrado.';
     case ErrorCategory.BUSINESS:
       return 'Operação não permitida.';
+    case ErrorCategory.BAD_REQUEST:
+      return 'Requisição inválida.';
+    case ErrorCategory.RATE_LIMIT:
+      return 'Muitas tentativas. Aguarde um momento e tente novamente.';
     case ErrorCategory.SERVER:
       return 'Erro interno do servidor. Tente novamente mais tarde.';
   }

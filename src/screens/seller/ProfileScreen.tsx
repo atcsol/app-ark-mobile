@@ -4,7 +4,7 @@ import { Button, List, WhiteSpace } from '@ant-design/react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks';
 import { ScreenContainer } from '@/components/layout';
-import { Avatar } from '@/components/ui';
+import { Avatar, BiometricSetting } from '@/components/ui';
 import { heading, body, spacing } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStyles } from '@/hooks/useThemeStyles';
@@ -57,6 +57,8 @@ export default function SellerProfileScreen() {
         </List.Item>
       </List>
 
+      <BiometricSetting style={styles.biometricSection} />
+
       <WhiteSpace size="xl" />
 
       <View style={styles.logoutContainer}>
@@ -91,6 +93,10 @@ const createStyles = (colors: Colors) => ({
     color: colors.accent,
     marginTop: 4,
     fontWeight: '600' as const,
+  },
+  biometricSection: {
+    marginTop: spacing.xl,
+    marginHorizontal: spacing.md,
   },
   logoutContainer: {
     paddingHorizontal: spacing.md,

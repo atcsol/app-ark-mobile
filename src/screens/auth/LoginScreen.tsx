@@ -86,7 +86,10 @@ export default function LoginScreen() {
             {
               text: 'Ativar',
               onPress: async () => {
-                await enableBiometrics(email.trim(), password);
+                const enabled = await enableBiometrics(email.trim(), password);
+                if (!enabled) {
+                  Toast.info('Não foi possível ativar a biometria neste aparelho.');
+                }
                 router.replace('/');
               },
             },
@@ -103,15 +106,20 @@ export default function LoginScreen() {
   const handleBiometricLogin = async () => {
     try {
       setBiometricLoading(true);
-      const credentials = await authenticateWithBiometrics();
-      if (credentials) {
-        const result = await login(credentials.email, credentials.password);
+      const auth = await authenticateWithBiometrics();
+      if (auth.status === 'success') {
+        const result = await login(auth.email, auth.password);
         if (result.success) {
           router.replace('/');
         } else {
           Toast.fail(result.message || 'Falha no login biometrico');
         }
+      } else if (auth.status === 'unavailable') {
+        Toast.info('Biometria desativada. Entre com sua senha para ativá-la novamente.');
+      } else if (auth.status === 'error') {
+        Toast.fail('Não foi possível autenticar com biometria. Entre com sua senha.');
       }
+      // 'cancelled': user dismissed the prompt, nothing to do
     } catch (error) {
       handleError(error, 'biometricLogin');
     } finally {

@@ -6,10 +6,11 @@ import { router } from 'expo-router';
 import { useAuth } from '@/hooks';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useAuthStore } from '@/stores/authStore';
+import { clearBiometricCredentials } from '@/utils/storage';
 import apiClient from '@/services/api';
 import { adminApi } from '@/services/adminApi';
 import { ScreenContainer } from '@/components/layout';
-import { Avatar } from '@/components/ui';
+import { Avatar, BiometricSetting } from '@/components/ui';
 import { FormInput } from '@/components/forms';
 import { heading, body, caption, spacing, borderRadius } from '@/theme';
 import { useTheme } from '@/theme/ThemeContext';
@@ -26,8 +27,13 @@ export default function AdminProfileScreen() {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
+  // Current password, required by the API only when the email changes
+  const [emailPassword, setEmailPassword] = useState('');
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
+
+  // Same comparison as the backend (case-insensitive)
+  const emailChanged = email.trim().toLowerCase() !== (user?.email || '').toLowerCase();
 
   // Avatar state
   const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.avatar?.url || null);
@@ -49,6 +55,11 @@ export default function AdminProfileScreen() {
       setAvatarUrl(user.avatar?.url || null);
     }
   }, [user]);
+
+  // Never keep the password around once the email is back to the current one
+  useEffect(() => {
+    if (!emailChanged) setEmailPassword('');
+  }, [emailChanged]);
 
   // --- Roles extraction ---
   const roles: string[] = Array.isArray(user?.roles)
@@ -140,6 +151,7 @@ export default function AdminProfileScreen() {
     const errors: Record<string, string> = {};
     if (!name.trim()) errors.name = 'Nome e obrigatorio';
     if (!email.trim()) errors.email = 'Email e obrigatorio';
+    if (emailChanged && !emailPassword) errors.current_password = 'Informe sua senha atual para alterar o email';
 
     if (Object.keys(errors).length > 0) {
       setProfileErrors(errors);
@@ -154,18 +166,39 @@ export default function AdminProfileScreen() {
         name: name.trim(),
         email: email.trim(),
         phone: phone.trim() || null,
+        ...(emailChanged ? { current_password: emailPassword } : {}),
       });
 
       const updatedUser = response?.user || response || { ...user, name: name.trim(), email: email.trim(), phone: phone.trim() };
       useAuthStore.getState().setUser(updatedUser);
+      setEmailPassword('');
 
-      Alert.alert('Sucesso', 'Perfil atualizado com sucesso.');
+      // Saved biometric login holds the old email: drop it so it is not replayed
+      if (emailChanged) {
+        await clearBiometricCredentials().catch(() => {});
+      }
+
+      Alert.alert('Sucesso', emailChanged
+        ? 'Perfil atualizado. Ative o login por biometria novamente se desejar.'
+        : 'Perfil atualizado com sucesso.');
     } catch (error) {
-      handleError(error, 'saveProfile');
+      const apiError = handleError(error, 'saveProfile');
+      // Validation errors are not shown by handleError: map them to the fields
+      if (apiError.isValidationError) {
+        const fieldErrors: Record<string, string> = {};
+        Object.entries(apiError.validationErrors || {}).forEach(([field, messages]) => {
+          if (messages?.[0]) fieldErrors[field] = messages[0];
+        });
+        if (Object.keys(fieldErrors).length > 0) {
+          setProfileErrors(fieldErrors);
+        } else {
+          Alert.alert('Erro', apiError.message);
+        }
+      }
     } finally {
       setProfileLoading(false);
     }
-  }, [name, email, phone, user, handleError]);
+  }, [name, email, phone, emailChanged, emailPassword, user, handleError]);
 
   // --- Change Password ---
   const handleChangePassword = useCallback(async () => {
@@ -195,7 +228,10 @@ export default function AdminProfileScreen() {
       setNewPassword('');
       setConfirmPassword('');
 
-      Alert.alert('Sucesso', 'Senha alterada com sucesso.');
+      // Saved biometric login holds the old password: drop it so it is not replayed
+      await clearBiometricCredentials().catch(() => {});
+
+      Alert.alert('Sucesso', 'Senha alterada. Ative o login por biometria novamente se desejar.');
     } catch (error) {
       handleError(error, 'changePassword');
     } finally {
@@ -315,6 +351,20 @@ export default function AdminProfileScreen() {
           autoCapitalize="none"
         />
 
+        {emailChanged && (
+          <FormInput
+            label="Senha Atual"
+            required
+            value={emailPassword}
+            onChangeText={setEmailPassword}
+            placeholder="Confirme sua senha para alterar o email"
+            error={profileErrors.current_password}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        )}
+
         <FormInput
           label="Telefone"
           value={phone}
@@ -383,7 +433,10 @@ export default function AdminProfileScreen() {
 
       <WhiteSpace size="lg" />
 
-      {/* Section 4: Logout */}
+      {/* Section 4: Biometric login */}
+      <BiometricSetting style={styles.biometricSection} />
+
+      {/* Section 5: Logout */}
       <View style={styles.card}>
         <Button
           type="warning"
@@ -501,6 +554,9 @@ const createStyles = (colors: Colors) => ({
   sectionTitle: {
     ...heading.h4,
     color: colors.textPrimary,
+  },
+  biometricSection: {
+    marginBottom: spacing.lg,
   },
   logoutButton: {
     borderColor: colors.error,

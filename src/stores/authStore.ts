@@ -7,6 +7,7 @@ import {
   saveUserData,
   getUserData,
   clearAll,
+  wipeLegacyBiometricCredentials,
 } from '@/utils/storage';
 import type { UserType } from '@/types/auth';
 
@@ -100,6 +101,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   hydrate: async () => {
+    await wipeLegacyBiometricCredentials().catch(() => {
+      // Ignore: must not block app start
+    });
+
     try {
       const token = await getToken();
       const userType = (await getUserType()) as UserType | null;

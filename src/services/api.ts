@@ -26,7 +26,6 @@ class ApiClient {
         if (__DEV__) {
           console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, {
             hasToken: !!token,
-            tokenPreview: token ? `${token.substring(0, 10)}...` : null,
           });
         }
         return config;

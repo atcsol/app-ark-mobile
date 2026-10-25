@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { STORAGE_KEYS } from './constants';
+import { STORAGE_KEYS, BIOMETRIC_STORAGE_KEYS, BIOMETRIC_ENABLED_VALUE } from './constants';
 
 // Token operations
 export const saveToken = async (token: string): Promise<void> => {
@@ -56,4 +56,20 @@ export const clearAll = async (): Promise<void> => {
   await Promise.all(
     Object.values(STORAGE_KEYS).map((key) => SecureStore.deleteItemAsync(key))
   );
+};
+
+// Remove biometric login credentials (every keychain variant, protected or legacy)
+export const clearBiometricCredentials = async (): Promise<void> => {
+  await Promise.all(
+    Object.values(BIOMETRIC_STORAGE_KEYS).map((key) => SecureStore.deleteItemAsync(key))
+  );
+};
+
+// Runs at app start so legacy unprotected credentials are wiped even if the user never
+// opens the login or profile screens again
+export const wipeLegacyBiometricCredentials = async (): Promise<void> => {
+  const marker = await SecureStore.getItemAsync(BIOMETRIC_STORAGE_KEYS.ENABLED);
+  if (marker !== BIOMETRIC_ENABLED_VALUE) {
+    await clearBiometricCredentials();
+  }
 };
